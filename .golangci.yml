@@ -10,7 +10,7 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 50
   exclude-files:
-    - "internal/api/types\\.go$"
+    - "internal/api/.*/types\\.go$"
 
 linters:
   enable:
@@ -44,4 +44,4 @@ exclusions:
   paths:
     - vendor$
     - third_party$
-    - internal/api/types\.go$
+    - internal/api/.*/types\.go$
