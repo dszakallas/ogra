@@ -53,11 +53,53 @@ def main():
         json.dump(openapi_doc, out, indent=2)
     print(f"✓ Generated OpenAPI spec at {openapi_out} ({len(schemas)} schemas)")
 
-    # Generate TypeScript types using openapi-typescript
-    os.makedirs(os.path.dirname(ts_out), exist_ok=True)
-    ts_cmd = ['npx', '-y', 'openapi-typescript', openapi_out, '-o', ts_out]
-    subprocess.run(ts_cmd, check=True, cwd=root_dir)
-    print(f"✓ Generated TypeScript types at {ts_out}")
+    # Generate TypeScript types for each resource individually
+    generated_ts_dir = os.path.join(root_dir, 'frontend', 'src', 'types', 'generated')
+    os.makedirs(generated_ts_dir, exist_ok=True)
+    
+    # Remove old generated files if they exist
+    for f in glob.glob(os.path.join(generated_ts_dir, '*.ts')):
+        try:
+            os.remove(f)
+        except OSError:
+            pass
+            
+    # Also delete the old single generated.ts if it exists
+    if os.path.exists(ts_out):
+        try:
+            os.remove(ts_out)
+        except OSError:
+            pass
+
+    for kind, schema in schemas.items():
+        single_openapi = {
+            'openapi': '3.0.3',
+            'info': {
+                'title': f'Argo Workflows {kind}',
+                'version': 'v1alpha1'
+            },
+            'paths': {},
+            'components': {
+                'schemas': {
+                    kind: schema
+                }
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(suffix='.json', mode='w', delete=False, encoding='utf-8') as tmp_openapi:
+            json.dump(single_openapi, tmp_openapi, indent=2)
+            tmp_openapi_path = tmp_openapi.name
+            
+        try:
+            out_path = os.path.join(generated_ts_dir, f'{kind}.ts')
+            ts_cmd = ['npx', '-y', 'openapi-typescript', tmp_openapi_path, '-o', out_path]
+            subprocess.run(ts_cmd, check=True, cwd=root_dir)
+            print(f"✓ Generated TypeScript types for {kind} at {out_path}")
+        finally:
+            try:
+                os.remove(tmp_openapi_path)
+            except OSError:
+                pass
 
     # Generate Go types using quicktype
     os.makedirs(os.path.dirname(go_out), exist_ok=True)

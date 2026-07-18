@@ -1,109 +1,22 @@
-export type WorkflowPhase = 'Pending' | 'Running' | 'Succeeded' | 'Failed' | 'Error';
-export type NodePhase = '' | 'Pending' | 'Running' | 'Succeeded' | 'Skipped' | 'Failed' | 'Error' | 'Omitted';
-export type NodeType = 'Pod' | 'Container' | 'Steps' | 'StepGroup' | 'DAG' | 'Retry' | 'Skipped' | 'TaskGroup' | 'Suspend';
+import { components as WorkflowComponents } from './generated/Workflow';
+import { components as WorkflowTemplateComponents } from './generated/WorkflowTemplate';
+import { components as CronWorkflowComponents } from './generated/CronWorkflow';
 
-export interface Parameter {
-  name: string;
-  value?: string;
-  default?: string;
-  description?: string;
-  enum?: string[];
-}
+export type Workflow = WorkflowComponents['schemas']['Workflow'];
+export type WorkflowTemplate = WorkflowTemplateComponents['schemas']['WorkflowTemplate'];
+export type CronWorkflow = CronWorkflowComponents['schemas']['CronWorkflow'];
 
-export interface NodeStatus {
-  id: string;
-  name: string;
-  displayName: string;
-  type: NodeType;
-  phase: NodePhase;
-  startedAt: string;
-  finishedAt?: string;
-  templateName?: string;
-  inputs?: { parameters?: Parameter[] };
-  outputs?: { parameters?: Parameter[] };
-  children: string[];
-  boundaryID: string;
-  message?: string;
-  progress?: string;
-  podIP?: string;
-}
+export type WorkflowPhase = string;
+export type NodePhase = string;
+export type NodeType = string;
 
-export interface Workflow {
-  apiVersion: string;
-  kind: "Workflow";
-  metadata: {
-    name: string;
-    namespace: string;
-    uid: string;
-    resourceVersion: string;
-    creationTimestamp: string;
-    labels?: Record<string, string>;
-    annotations?: Record<string, string>;
-  };
-  spec: {
-    entrypoint?: string;
-    arguments?: { parameters?: Parameter[] };
-    workflowTemplateRef?: { name: string };
-    templates?: any[];
-    suspend?: boolean;
-  };
-  status: {
-    phase: WorkflowPhase;
-    startedAt: string;
-    finishedAt?: string;
-    progress?: string; // "N/M"
-    message?: string;
-    estimatedDuration?: number;
-    nodes: Record<string, NodeStatus>;
-    conditions?: Array<{ type: string; status: string; message?: string }>;
-  };
-}
+export type Parameter = NonNullable<
+  NonNullable<NonNullable<Workflow['spec']>['arguments']>['parameters']
+>[number];
 
-export interface WorkflowTemplate {
-  apiVersion: string;
-  kind: "WorkflowTemplate";
-  metadata: {
-    name: string;
-    namespace: string;
-    uid: string;
-    resourceVersion: string;
-    creationTimestamp: string;
-    annotations?: Record<string, string>;
-  };
-  spec: {
-    entrypoint: string;
-    arguments?: { parameters?: Parameter[] };
-    templates: any[];
-  };
-}
-
-export interface CronWorkflow {
-  apiVersion: string;
-  kind: "CronWorkflow";
-  metadata: {
-    name: string;
-    namespace: string;
-    uid: string;
-    resourceVersion: string;
-    creationTimestamp: string;
-  };
-  spec: {
-    schedule?: string;
-    schedules?: string[];
-    timezone?: string;
-    suspend?: boolean;
-    workflowSpec: {
-      workflowTemplateRef?: { name: string };
-      arguments?: { parameters?: Parameter[] };
-    };
-  };
-  status?: {
-    lastScheduledTime?: string;
-    active?: Array<{ name: string; namespace: string }>;
-    succeeded?: number;
-    failed?: number;
-  };
-}
+export type NodeStatus = NonNullable<
+  NonNullable<NonNullable<Workflow['status']>['nodes']>[string]
+>;
 
 export interface ServerInfo {
   managedNamespaces: string[];

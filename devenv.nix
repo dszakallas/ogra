@@ -23,6 +23,7 @@
     pkgs.pnpm
     pkgs.playwright-driver
     pkgs.playwright-test
+    (pkgs.python3.withPackages (ps: [ ps.pyyaml ]))
   ];
 
   languages.go.enable = true;
