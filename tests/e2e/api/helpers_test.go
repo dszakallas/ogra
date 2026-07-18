@@ -12,9 +12,11 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -24,7 +26,7 @@ import (
 
 type apiEnv struct {
 	namespace string
-	server    *httptest.Server
+	baseURL   string
 	client    *http.Client
 }
 
@@ -38,17 +40,46 @@ func setupAPIEnv(t *testing.T, fixture string) *apiEnv {
 		_ = testbedTeardown(ns)
 	})
 
-	clients, err := config.NewKubeClients(config.KubeConfigOptions{})
-	require.NoError(t, err)
+	baseURL := os.Getenv("TEST_BACKEND_URL")
+	if baseURL == "" {
+		port := os.Getenv("TEST_BACKEND_PORT")
+		if port != "" {
+			baseURL = "http://localhost:" + port
+		}
+	}
 
-	mux := buildMux(clients)
-	server := httptest.NewServer(mux)
-	t.Cleanup(func() { server.Close() })
+	var client *http.Client
+	if baseURL != "" {
+		hc := &http.Client{Timeout: 500 * time.Millisecond}
+		req, err := http.NewRequestWithContext(context.Background(), "GET", baseURL+"/api/v1/info", nil)
+		if err != nil {
+			baseURL = ""
+		} else {
+			resp, err := hc.Do(req)
+			if err != nil || (resp.StatusCode != 200 && resp.StatusCode != 401 && resp.StatusCode != 403) {
+				baseURL = ""
+			} else {
+				_ = resp.Body.Close()
+				client = &http.Client{}
+			}
+		}
+	}
+
+	if baseURL == "" {
+		clients, err := config.NewKubeClients(config.KubeConfigOptions{})
+		require.NoError(t, err)
+
+		mux := buildMux(clients)
+		server := httptest.NewServer(mux)
+		t.Cleanup(func() { server.Close() })
+		baseURL = server.URL
+		client = server.Client()
+	}
 
 	return &apiEnv{
 		namespace: ns,
-		server:    server,
-		client:    server.Client(),
+		baseURL:   baseURL,
+		client:    client,
 	}
 }
 
@@ -172,7 +203,7 @@ func (e *apiEnv) doRequest(method, path string, body any) (int, map[string]any) 
 		reqBody = bytes.NewBuffer(b)
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), method, e.server.URL+path, reqBody)
+	req, err := http.NewRequestWithContext(context.Background(), method, e.baseURL+path, reqBody)
 	if err != nil {
 		panic(err)
 	}
@@ -197,7 +228,7 @@ func (e *apiEnv) streamSSE(ctx context.Context, path string) <-chan string {
 	ch := make(chan string, 100)
 	go func() {
 		defer close(ch)
-		req, err := http.NewRequestWithContext(ctx, "GET", e.server.URL+path, nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", e.baseURL+path, nil)
 		if err != nil {
 			return
 		}

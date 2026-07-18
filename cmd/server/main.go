@@ -77,15 +77,14 @@ func main() {
 	mux.HandleFunc("GET /api/v1/workflows/{namespace}/{name}", func(w http.ResponseWriter, r *http.Request) {
 		wfH.GetWorkflow(w, r, r.PathValue("namespace"), r.PathValue("name"))
 	})
+	mux.HandleFunc("GET /api/v1/workflows/{namespace}/{name}/log", func(w http.ResponseWriter, r *http.Request) {
+		logsH.StreamWorkflowLogs(w, r, r.PathValue("namespace"), r.PathValue("name"))
+	})
 	mux.HandleFunc("DELETE /api/v1/workflows/{namespace}/{name}", func(w http.ResponseWriter, r *http.Request) {
 		wfH.DeleteWorkflow(w, r, r.PathValue("namespace"), r.PathValue("name"))
 	})
 	mux.HandleFunc("PUT /api/v1/workflows/{namespace}/{name}/{action}", func(w http.ResponseWriter, r *http.Request) {
 		action := r.PathValue("action")
-		if action == "log" {
-			logsH.StreamWorkflowLogs(w, r, r.PathValue("namespace"), r.PathValue("name"))
-			return
-		}
 		wfH.PatchWorkflowAction(w, r, r.PathValue("namespace"), r.PathValue("name"), action)
 	})
 

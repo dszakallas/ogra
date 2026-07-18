@@ -87,4 +87,19 @@
   scripts.gen-api-types.exec = ''
     python3 "${config.devenv.root}/scripts/gen-api-types.py" "$@"
   '';
+
+  scripts.api-test.exec = ''
+    cd "${config.devenv.root}"
+    export TEST_BACKEND_PORT="${toString config.processes.backend.ports.http.value}"
+    exec go test -tags e2e ./tests/e2e/api/ -v "$@"
+  '';
+
+  tasks."api-test:run" = {
+    exec = ''
+      cd "${config.devenv.root}"
+      export TEST_BACKEND_PORT="${toString config.processes.backend.ports.http.value}"
+      go test -tags e2e ./tests/e2e/api/ -v
+    '';
+    after = [ "devenv:processes:backend" ];
+  };
 }
