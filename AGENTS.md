@@ -10,7 +10,7 @@ Key devenv scripts:
 - `backend` — runs the Go backend server (`go run ./cmd/server`)
 - `frontend` — runs the Vite dev server for the React frontend
 - `testbed` — manages E2E test namespaces (`testbed setup <fixture>`, `testbed teardown <ns>`)
-- `playwright-test` — runs Playwright UI tests with the Nix-managed Chromium
+- `ui-test` — runs Playwright UI tests with the Nix-managed Chromium
 - `gen-api-types` — regenerates Go and TypeScript types from Argo Workflows CRDs
 
 ## Devenv processes
@@ -152,7 +152,7 @@ Playwright tests require both the backend and frontend running. Use the devenv p
 or start them manually, then:
 
 ```bash
-playwright-test
+ui-test
 ```
 
 ## Markdown files

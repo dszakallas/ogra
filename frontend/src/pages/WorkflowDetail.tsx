@@ -9,18 +9,15 @@ import {
   StopCircle,
   XCircle,
   Trash2,
-  Layers,
   Clock,
   Terminal,
   Activity,
-  Calendar,
   AlertCircle,
-  Hash,
   ExternalLink,
   Copy
 } from 'lucide-react';
 import { useCluster } from '../context/ClusterContext';
-import { Workflow, NodeStatus, Parameter } from '../types';
+import { Workflow } from '../types';
 import { PhaseBadge } from '../components/PhaseBadge';
 import { LogStream } from '../components/LogStream';
 import { getDuration } from '../utils/time';
@@ -122,11 +119,9 @@ export function WorkflowDetail({
   }
 
   const phase = workflow.status?.phase || 'Pending';
-  const isCompleted = workflow.metadata.labels?.['workflows.argoproj.io/completed'] === 'true';
   const isSuspended = workflow.spec?.suspend === true;
   const isRunning = phase === 'Running' && !isSuspended;
 
-  const nodeCount = workflow.status?.nodes ? Object.keys(workflow.status.nodes).length : 0;
   const nodesList = workflow.status?.nodes ? Object.values(workflow.status.nodes) : [];
   const podNodes = nodesList.filter((n) => n.type === 'Pod');
 

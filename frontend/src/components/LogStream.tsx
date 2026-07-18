@@ -75,7 +75,7 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
       }
     };
 
-    eventSource.onerror = (err) => {
+    eventSource.onerror = () => {
       console.log('SSE connection closed or re-establishing...');
     };
 

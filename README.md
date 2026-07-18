@@ -121,7 +121,7 @@ devenv shell --profile kind --quiet -- go test -v -tags=e2e ./tests/...
 Run Playwright browser integration tests:
 
 ```bash
-devenv shell --profile kind --quiet -- playwright-test --reporter=line
+devenv shell --profile kind --quiet -- ui-test --reporter=line
 ```
 
 ### Testbed Namespace Garbage Collection

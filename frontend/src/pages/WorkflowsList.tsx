@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, RotateCw, Filter, SlidersHorizontal, Plus, AlertCircle, Layout, Calendar, Layers, Clock, Trash2 } from 'lucide-react';
-import { Workflow, WorkflowPhase } from '../types';
+import { AlertCircle, Layout, Calendar, Layers, Clock, Trash2 } from 'lucide-react';
+import { Workflow } from '../types';
 import { PhaseBadge } from '../components/PhaseBadge';
 import { ProgressBar } from '../components/ProgressBar';
 import { getRelativeTime, getDuration } from '../utils/time';
@@ -21,10 +21,8 @@ export function WorkflowsList({
   workflows,
   selectedNamespace,
   search,
-  setSearch,
   selectedPhase,
   setSelectedPhase,
-  onRefresh,
   onDelete
 }: WorkflowsListProps) {
   const navigate = useNavigate();
@@ -50,29 +48,6 @@ export function WorkflowsList({
     return matchesNamespace && matchesSearch && matchesPhase;
   });
 
-  // Calculate status counts for the selected namespace
-  const counts = workflows
-    .filter((wf) => selectedNamespace === 'all' || wf.metadata.namespace === selectedNamespace)
-    .reduce(
-      (acc, wf) => {
-        const ph = wf.status?.phase || 'Pending';
-        acc[ph] = (acc[ph] || 0) + 1;
-        return acc;
-      },
-      { Pending: 0, Running: 0, Succeeded: 0, Failed: 0, Error: 0 } as Record<string, number>
-    );
-
-  const totalFilteredCount = workflows.filter(
-    (wf) => selectedNamespace === 'all' || wf.metadata.namespace === selectedNamespace
-  ).length;
-
-  const phaseChips = [
-    { label: 'All', value: 'ALL', count: totalFilteredCount, color: 'border-gray-800 text-gray-300' },
-    { label: 'Running', value: 'RUNNING', count: counts.Running || 0, color: 'border-blue-900/50 text-blue-400 bg-blue-950/10' },
-    { label: 'Pending', value: 'PENDING', count: counts.Pending || 0, color: 'border-amber-900/50 text-amber-500 bg-amber-950/10' },
-    { label: 'Succeeded', value: 'SUCCEEDED', count: counts.Succeeded || 0, color: 'border-emerald-900/50 text-emerald-400 bg-emerald-950/10' },
-    { label: 'Failed', value: 'FAILED', count: (counts.Failed || 0) + (counts.Error || 0), color: 'border-rose-900/50 text-rose-400 bg-rose-950/10' }
-  ];
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full px-4 pb-20">

@@ -2,15 +2,10 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Calendar,
   Play,
-  Pause,
   AlertCircle,
   Clock,
-  ExternalLink,
   History,
-  Activity,
-  Layers,
   CheckCircle2,
   XCircle,
   ToggleLeft,
@@ -62,7 +57,7 @@ export function CronWorkflowDetail({
   }
 
   const isSuspended = cron.spec.suspend === true;
-  const scheduleExpr = cron.spec.schedule || cron.spec.schedules?.[0] || '';
+  const scheduleExpr = cron.spec.schedules?.join(', ') || '';
   const timezone = cron.spec.timezone || 'UTC';
   const succeeded = cron.status?.succeeded || 0;
   const failed = cron.status?.failed || 0;
@@ -78,7 +73,7 @@ export function CronWorkflowDetail({
   const getHumanSchedule = (expr: string) => {
     try {
       return cronstrue.toString(expr, { use24HourTimeFormat: true });
-    } catch (e) {
+    } catch {
       return expr;
     }
   };

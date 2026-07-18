@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Workflow, WorkflowTemplate, CronWorkflow, UserInfo, ServerInfo } from '../types';
-import { apiFetch, ApiError } from '../utils/api';
+import { apiFetch } from '../utils/api';
 import { ToastContainer, ToastMessage } from '../components/Toast';
 
 interface ClusterContextType {

@@ -2,9 +2,26 @@ import { components as WorkflowComponents } from './generated/Workflow';
 import { components as WorkflowTemplateComponents } from './generated/WorkflowTemplate';
 import { components as CronWorkflowComponents } from './generated/CronWorkflow';
 
-export type Workflow = WorkflowComponents['schemas']['Workflow'];
-export type WorkflowTemplate = WorkflowTemplateComponents['schemas']['WorkflowTemplate'];
-export type CronWorkflow = CronWorkflowComponents['schemas']['CronWorkflow'];
+export interface ObjectMeta {
+  name: string;
+  namespace: string;
+  uid?: string;
+  resourceVersion?: string;
+  generation?: number;
+  creationTimestamp?: string;
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+}
+
+export type Workflow = Omit<WorkflowComponents['schemas']['Workflow'], 'metadata'> & {
+  metadata: ObjectMeta;
+};
+export type WorkflowTemplate = Omit<WorkflowTemplateComponents['schemas']['WorkflowTemplate'], 'metadata'> & {
+  metadata: ObjectMeta;
+};
+export type CronWorkflow = Omit<CronWorkflowComponents['schemas']['CronWorkflow'], 'metadata'> & {
+  metadata: ObjectMeta;
+};
 
 export type WorkflowPhase = string;
 export type NodePhase = string;

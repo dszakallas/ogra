@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Play, Pause, AlertCircle, RefreshCw, Clock, BarChart3, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Calendar, Play, AlertCircle, Clock } from 'lucide-react';
 import { CronWorkflow } from '../types';
 import cronstrue from 'cronstrue';
 import { getRelativeTime } from '../utils/time';
@@ -24,15 +24,16 @@ export function CronWorkflows({
 
   const filteredCrons = cronWorkflows.filter((cron) => {
     const matchesNamespace = selectedNamespace === 'all' || cron.metadata.namespace === selectedNamespace;
+    const schedulesStr = cron.spec.schedules?.join(', ') || '';
     const matchesSearch = cron.metadata.name.toLowerCase().includes(search.toLowerCase()) ||
-                          (cron.spec.schedule && cron.spec.schedule.toLowerCase().includes(search.toLowerCase()));
+                          schedulesStr.toLowerCase().includes(search.toLowerCase());
     return matchesNamespace && matchesSearch;
   });
 
   const getHumanSchedule = (expr: string) => {
     try {
       return cronstrue.toString(expr, { use24HourTimeFormat: true });
-    } catch (e) {
+    } catch {
       return expr;
     }
   };
@@ -60,7 +61,7 @@ export function CronWorkflows({
         ) : (
           filteredCrons.map((cron) => {
             const isSuspended = cron.spec.suspend === true;
-            const scheduleExpr = cron.spec.schedule || cron.spec.schedules?.[0] || '';
+            const scheduleExpr = cron.spec.schedules?.join(', ') || '';
             const timezone = cron.spec.timezone || 'UTC';
             const succeeded = cron.status?.succeeded || 0;
             const failed = cron.status?.failed || 0;

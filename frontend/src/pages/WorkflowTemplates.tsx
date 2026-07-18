@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sliders, Play, Plus, BookOpen, AlertCircle, X, Check } from 'lucide-react';
-import { WorkflowTemplate, Parameter } from '../types';
+import { Play, BookOpen, AlertCircle, X, Check } from 'lucide-react';
+import { WorkflowTemplate } from '../types';
 import { ParameterInput } from '../components/ParameterInput';
 
 interface WorkflowTemplatesProps {
