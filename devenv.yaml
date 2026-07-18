@@ -1,0 +1,15 @@
+inputs:
+  flake-utils:
+    url: github:numtide/flake-utils
+  git-hooks:
+    url: github:cachix/git-hooks.nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+  dotfiles-common:
+    url: github:dszakallas/dotfiles-common
+    inputs:
+      nixpkgs:
+        follows: nixpkgs

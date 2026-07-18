@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: periodic-backup-job
+  namespace: default
+spec:
+  schedules:
+    - "* * * * *"
+  concurrencyPolicy: "Forbid"
+  startingDeadlineSeconds: 30
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  workflowSpec:
+    entrypoint: backup
+    templates:
+      - name: backup
+        script:
+          image: bash:latest
+          command: [bash]
+          source: |
+            echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') [CRON] Starting periodic backup..."
+            sleep 3
+            echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') [CRON] Backup completed."

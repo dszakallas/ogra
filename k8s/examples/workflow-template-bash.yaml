@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: bash-simulation-template
+  namespace: example-a
+  labels:
+    example: "true"
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: sleep-duration
+        value: "5"
+        description: "Duration to sleep in seconds"
+  templates:
+    - name: main
+      steps:
+        - - name: step-log-start
+            template: log-message
+            arguments:
+              parameters:
+                - name: message
+                  value: "Starting bash workflow simulation..."
+        - - name: step-work
+            template: simulate-work
+            arguments:
+              parameters:
+                - name: duration
+                  value: "{{workflow.parameters.sleep-duration}}"
+        - - name: step-log-end
+            template: log-message
+            arguments:
+              parameters:
+                - name: message
+                  value: "Workflow simulation completed successfully."
+
+    - name: log-message
+      inputs:
+        parameters:
+          - name: message
+      script:
+        image: bash:latest
+        command: [bash]
+        source: |
+          echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') [INFO] {{inputs.parameters.message}}"
+
+    - name: simulate-work
+      inputs:
+        parameters:
+          - name: duration
+      script:
+        image: bash:latest
+        command: [bash]
+        source: |
+          echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') [INFO] Processing work items for {{inputs.parameters.duration}} seconds..."
+          for i in $(seq 1 {{inputs.parameters.duration}}); do
+            echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') [WORKING] Step $i of {{inputs.parameters.duration}}"
+            sleep 1
+          done
+          echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') [SUCCESS] Done processing."

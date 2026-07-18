@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: python-data-pipeline
+  namespace: example-b
+  labels:
+    env: "test"
+    tier: "analytics"
+spec:
+  entrypoint: data-pipeline
+  arguments:
+    parameters:
+      - name: dataset-name
+        value: "daily-user-metrics"
+        description: "Target dataset name for processing"
+      - name: fail-probability
+        value: "0"
+        description: "Set to 1 to simulate pipeline failure"
+  templates:
+    - name: data-pipeline
+      dag:
+        tasks:
+          - name: extract
+            template: extract-task
+          - name: transform
+            dependencies: [extract]
+            template: transform-task
+            arguments:
+              parameters:
+                - name: dataset
+                  value: "{{workflow.parameters.dataset-name}}"
+          - name: load
+            dependencies: [transform]
+            template: load-task
+
+    - name: extract-task
+      script:
+        image: python:3.11-slim
+        command: [python]
+        source: |
+          import time
+          print("[EXTRACT] Fetching raw records from data lake...")
+          time.sleep(2)
+          print("[EXTRACT] Extracted 15,420 records.")
+
+    - name: transform-task
+      inputs:
+        parameters:
+          - name: dataset
+      script:
+        image: python:3.11-slim
+        command: [python]
+        source: |
+          import time, sys
+          print(f"[TRANSFORM] Cleaning dataset: {{inputs.parameters.dataset}}")
+          time.sleep(3)
+          print("[TRANSFORM] Normalization complete.")
+
+    - name: load-task
+      script:
+        image: python:3.11-slim
+        command: [python]
+        source: |
+          import time
+          print("[LOAD] Inserting records into analytics database...")
+          time.sleep(2)
+          print("[LOAD] All rows committed successfully.")

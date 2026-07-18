@@ -1,0 +1,47 @@
+version: "2"
+run:
+  concurrency: 4
+  timeout: 5m
+  tests: true
+  build-tags:
+    - e2e
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 50
+  exclude-files:
+    - "internal/api/types\\.go$"
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - unused
+    - errcheck
+    - errorlint
+    - nilerr
+    - forcetypeassert
+    - durationcheck
+    - gocritic
+    - revive
+    - whitespace
+    - godot
+    - misspell
+    - dupword
+    - predeclared
+    - errname
+    - asciicheck
+    - ineffassign
+    - bodyclose
+    - noctx
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+
+exclusions:
+  paths:
+    - vendor$
+    - third_party$
+    - internal/api/types\.go$
