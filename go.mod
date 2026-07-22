@@ -1,4 +1,4 @@
-module github.com/dszakallas/kolobok/ogra
+module github.com/dszakallas/ogra
 
 go 1.23
 

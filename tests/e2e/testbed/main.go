@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	"github.com/dszakallas/kolobok/ogra/internal/config"
+	"github.com/dszakallas/ogra/internal/config"
 )
 
 func main() {

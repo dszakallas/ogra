@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dszakallas/kolobok/ogra/internal/config"
-	"github.com/dszakallas/kolobok/ogra/internal/handler"
+	"github.com/dszakallas/ogra/internal/config"
+	"github.com/dszakallas/ogra/internal/handler"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {

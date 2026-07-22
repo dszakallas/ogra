@@ -12,7 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/dszakallas/kolobok/ogra/internal/config"
+	"github.com/dszakallas/ogra/internal/config"
 )
 
 func TestWorkflowTemplateSubmissionAndLifecycle(t *testing.T) {
