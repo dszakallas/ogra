@@ -26,14 +26,23 @@ jobs:
           name: devenv
       - run: nix profile add nixpkgs#devenv
       - run: devenv test --dont-override-dotfile
+      - name: Build backend package with Nix
+        run: nix build .#backend --extra-experimental-features "nix-command flakes"
       - name: Apply autofixes
         if: |
-          failure() &&
-          contains(github.event.pull_request.labels.*.name, 'autofix')
+          failure() && (
+            contains(github.event.pull_request.labels.*.name, 'autofix') ||
+            github.actor == 'renovate[bot]' ||
+            startsWith(github.head_ref, 'renovate/')
+          )
         shell: devenv shell bash -- -e {0}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Run the standalone script to update the Nix hashes if dependencies changed
+          ./scripts/update-nix-hashes.sh
+
           git add -A
           if ! git diff --cached --quiet; then
             git commit -m "chore: apply autofixes"

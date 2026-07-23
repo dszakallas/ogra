@@ -63,6 +63,16 @@
       files = "^api/crds/.*\\.yaml$";
       pass_filenames = false;
     };
+
+    # Auto-update Nix derivation hashes
+    update-nix-hashes = {
+      enable = true;
+      name = "Update Nix Hashes";
+      entry = "./scripts/update-nix-hashes.sh";
+      language = "system";
+      files = "(\\.nix|go\\.mod|go\\.sum)$";
+      pass_filenames = true;
+    };
   };
 
   env = {

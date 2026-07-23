@@ -3,11 +3,14 @@ package main
 
 import (
 	"flag"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/dszakallas/ogra/frontend"
 	"github.com/dszakallas/ogra/internal/config"
 	"github.com/dszakallas/ogra/internal/handler"
 )
@@ -120,6 +123,38 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
 	})
+
+	// Serve frontend static files
+	subFS, err := fs.Sub(frontend.DistFS, "dist")
+	if err != nil {
+		log.Fatalf("Failed to create sub FS for embedded frontend: %v", err)
+	}
+
+	fileServer := http.FileServer(http.FS(subFS))
+
+	// Catch-all handler for the SPA frontend
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if path == "/" {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// Clean the path to prevent directory traversal
+		cleanedPath := filepath.Clean(path)
+
+		// Try to open the file in the subFS to see if it exists
+		f, err := subFS.Open(strings.TrimPrefix(cleanedPath, "/"))
+		if err == nil {
+			_ = f.Close()
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// Fallback to index.html for SPA client-side routing
+		r.URL.Path = "/"
+		fileServer.ServeHTTP(w, r)
+	}))
 
 	log.Printf("Starting ogra backend server on :%s ...", port)
 	if err := http.ListenAndServe(":"+port, corsMiddleware(mux)); err != nil {
