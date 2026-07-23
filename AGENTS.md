@@ -1,5 +1,9 @@
 # Agent instructions for ogra
 
+## Project specification
+
+Read the full [project specification](SPEC.md)<!-- @./SPEC.md -->.
+
 ## Development environment
 
 This project uses `devenv.nix` for its development environment. All commands should be run
