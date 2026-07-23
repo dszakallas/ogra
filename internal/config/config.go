@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -18,6 +19,64 @@ type KubeConfigOptions struct {
 	Kubeconfig string
 	Context    string
 	APIServer  string
+}
+
+// ServerConfig holds namespace scoping and server runtime settings matching Argo Workflows options.
+type ServerConfig struct {
+	Namespaced        bool
+	ManagedNamespaces []string
+}
+
+// GetPodNamespace returns the pod's serviceaccount namespace or fallback "default".
+func GetPodNamespace() string {
+	if ns := os.Getenv("POD_NAMESPACE"); ns != "" {
+		return ns
+	}
+	if ns := os.Getenv("NAMESPACE"); ns != "" {
+		return ns
+	}
+	if data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
+		if ns := strings.TrimSpace(string(data)); ns != "" {
+			return ns
+		}
+	}
+	return "default"
+}
+
+// NewServerConfig initializes ServerConfig from flags/env vars matching Argo Workflows options.
+func NewServerConfig(namespacedFlag bool, managedNsFlag string) *ServerConfig {
+	namespaced := namespacedFlag
+	if !namespaced {
+		envVal := strings.ToLower(os.Getenv("NAMESPACED"))
+		if envVal == "true" || envVal == "1" {
+			namespaced = true
+		}
+	}
+
+	managedStr := managedNsFlag
+	if managedStr == "" {
+		managedStr = os.Getenv("MANAGED_NAMESPACE")
+	}
+
+	var managedNamespaces []string
+	if managedStr != "" {
+		parts := strings.Split(managedStr, ",")
+		for _, p := range parts {
+			trimmed := strings.TrimSpace(p)
+			if trimmed != "" {
+				managedNamespaces = append(managedNamespaces, trimmed)
+			}
+		}
+	}
+
+	if len(managedNamespaces) == 0 {
+		managedNamespaces = []string{GetPodNamespace()}
+	}
+
+	return &ServerConfig{
+		Namespaced:        namespaced,
+		ManagedNamespaces: managedNamespaces,
+	}
 }
 
 // KubeClients holds typed and dynamic Kubernetes clients and active connection metadata.

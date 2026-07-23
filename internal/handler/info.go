@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/dszakallas/ogra/internal/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -10,11 +11,15 @@ import (
 // InfoHandler handles system info, version, and userinfo endpoints.
 type InfoHandler struct {
 	kubeClient kubernetes.Interface
+	serverCfg  *config.ServerConfig
 }
 
 // NewInfoHandler creates a new InfoHandler.
-func NewInfoHandler(kubeClient kubernetes.Interface) *InfoHandler {
-	return &InfoHandler{kubeClient: kubeClient}
+func NewInfoHandler(kubeClient kubernetes.Interface, serverCfg *config.ServerConfig) *InfoHandler {
+	return &InfoHandler{
+		kubeClient: kubeClient,
+		serverCfg:  serverCfg,
+	}
 }
 
 // InfoResponse matches ServerInfo expected by frontend.
@@ -46,7 +51,9 @@ func (h *InfoHandler) GetInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var namespaces []string
-	if h.kubeClient != nil {
+	if h.serverCfg != nil && h.serverCfg.Namespaced {
+		namespaces = h.serverCfg.ManagedNamespaces
+	} else if h.kubeClient != nil {
 		nsList, err := h.kubeClient.CoreV1().Namespaces().List(r.Context(), metav1.ListOptions{})
 		if err == nil {
 			for _, item := range nsList.Items {
@@ -54,8 +61,13 @@ func (h *InfoHandler) GetInfo(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 	if len(namespaces) == 0 {
-		namespaces = []string{"default", "argo", "example-a", "example-b"}
+		if h.serverCfg != nil && len(h.serverCfg.ManagedNamespaces) > 0 {
+			namespaces = h.serverCfg.ManagedNamespaces
+		} else {
+			namespaces = []string{config.GetPodNamespace()}
+		}
 	}
 
 	writeJSON(w, InfoResponse{

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/dszakallas/ogra/internal/config"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,11 +24,15 @@ var workflowResource = schema.GroupVersionResource{
 // WorkflowHandler handles HTTP endpoints for Workflows.
 type WorkflowHandler struct {
 	dynClient dynamic.Interface
+	serverCfg *config.ServerConfig
 }
 
 // NewWorkflowHandler creates a new WorkflowHandler.
-func NewWorkflowHandler(dynClient dynamic.Interface) *WorkflowHandler {
-	return &WorkflowHandler{dynClient: dynClient}
+func NewWorkflowHandler(dynClient dynamic.Interface, serverCfg *config.ServerConfig) *WorkflowHandler {
+	return &WorkflowHandler{
+		dynClient: dynClient,
+		serverCfg: serverCfg,
+	}
 }
 
 // SubmitRequest payload matching frontend submit expectations.
@@ -57,16 +63,40 @@ func (h *WorkflowHandler) ListWorkflows(w http.ResponseWriter, r *http.Request, 
 		opts.LabelSelector = labelSelector
 	}
 
-	unstructuredList, err := h.dynClient.Resource(workflowResource).Namespace(targetNs).List(r.Context(), opts)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to list workflows: %v", err), http.StatusInternalServerError)
-		return
+	var items []unstructured.Unstructured
+	if targetNs == "" && h.serverCfg != nil && h.serverCfg.Namespaced {
+		for _, managed := range h.serverCfg.ManagedNamespaces {
+			list, err := h.dynClient.Resource(workflowResource).Namespace(managed).List(r.Context(), opts)
+			if err == nil {
+				items = append(items, list.Items...)
+			}
+		}
+	} else {
+		unstructuredList, err := h.dynClient.Resource(workflowResource).Namespace(targetNs).List(r.Context(), opts)
+		switch {
+		case err == nil:
+			items = unstructuredList.Items
+		case targetNs == "" && apierrors.IsForbidden(err) && h.serverCfg != nil:
+			for _, managed := range h.serverCfg.ManagedNamespaces {
+				list, lErr := h.dynClient.Resource(workflowResource).Namespace(managed).List(r.Context(), opts)
+				if lErr == nil {
+					items = append(items, list.Items...)
+				}
+			}
+		default:
+			writeError(w, err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if items == nil {
+		items = []unstructured.Unstructured{}
 	}
 
 	writeJSON(w, map[string]any{
 		"apiVersion": "argoproj.io/v1alpha1",
 		"kind":       "WorkflowList",
-		"items":      unstructuredList.Items,
+		"items":      items,
 	})
 }
 

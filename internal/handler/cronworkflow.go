@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dszakallas/ogra/internal/config"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,11 +22,15 @@ var cronWorkflowResource = schema.GroupVersionResource{
 // CronWorkflowHandler handles HTTP endpoints for CronWorkflows.
 type CronWorkflowHandler struct {
 	dynClient dynamic.Interface
+	serverCfg *config.ServerConfig
 }
 
 // NewCronWorkflowHandler creates a new CronWorkflowHandler.
-func NewCronWorkflowHandler(dynClient dynamic.Interface) *CronWorkflowHandler {
-	return &CronWorkflowHandler{dynClient: dynClient}
+func NewCronWorkflowHandler(dynClient dynamic.Interface, serverCfg *config.ServerConfig) *CronWorkflowHandler {
+	return &CronWorkflowHandler{
+		dynClient: dynClient,
+		serverCfg: serverCfg,
+	}
 }
 
 // ListCronWorkflows lists CronWorkflows in a namespace or all namespaces.
@@ -40,16 +46,40 @@ func (h *CronWorkflowHandler) ListCronWorkflows(w http.ResponseWriter, r *http.R
 		targetNs = ""
 	}
 
-	unstructuredList, err := h.dynClient.Resource(cronWorkflowResource).Namespace(targetNs).List(r.Context(), metav1.ListOptions{})
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to list cronworkflows: %v", err), http.StatusInternalServerError)
-		return
+	var items []unstructured.Unstructured
+	if targetNs == "" && h.serverCfg != nil && h.serverCfg.Namespaced {
+		for _, managed := range h.serverCfg.ManagedNamespaces {
+			list, err := h.dynClient.Resource(cronWorkflowResource).Namespace(managed).List(r.Context(), metav1.ListOptions{})
+			if err == nil {
+				items = append(items, list.Items...)
+			}
+		}
+	} else {
+		unstructuredList, err := h.dynClient.Resource(cronWorkflowResource).Namespace(targetNs).List(r.Context(), metav1.ListOptions{})
+		switch {
+		case err == nil:
+			items = unstructuredList.Items
+		case targetNs == "" && apierrors.IsForbidden(err) && h.serverCfg != nil:
+			for _, managed := range h.serverCfg.ManagedNamespaces {
+				list, lErr := h.dynClient.Resource(cronWorkflowResource).Namespace(managed).List(r.Context(), metav1.ListOptions{})
+				if lErr == nil {
+					items = append(items, list.Items...)
+				}
+			}
+		default:
+			writeError(w, err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if items == nil {
+		items = []unstructured.Unstructured{}
 	}
 
 	writeJSON(w, map[string]any{
 		"apiVersion": "argoproj.io/v1alpha1",
 		"kind":       "CronWorkflowList",
-		"items":      unstructuredList.Items,
+		"items":      items,
 	})
 }
 

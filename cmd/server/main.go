@@ -33,6 +33,8 @@ func main() {
 	kubeconfigFlag := flag.String("kubeconfig", "", "Path to kubeconfig file (or $KUBECONFIG)")
 	contextFlag := flag.String("context", "", "Kubernetes context name (or $KUBE_CONTEXT)")
 	apiServerFlag := flag.String("server", "", "Kubernetes API server URL (or $KUBE_API_SERVER)")
+	namespacedFlag := flag.Bool("namespaced", false, "Run in namespaced mode (or $NAMESPACED)")
+	managedNsFlag := flag.String("managed-namespace", "", "Managed namespace(s), comma-separated (or $MANAGED_NAMESPACE)")
 	flag.Parse()
 
 	port := *portFlag
@@ -54,13 +56,16 @@ func main() {
 		log.Fatalf("Failed to initialize Kubernetes client: %v", err)
 	}
 
-	log.Printf("Connected to Kubernetes API host=%s (context=%s)", clients.Host, clients.ActiveContext)
+	serverCfg := config.NewServerConfig(*namespacedFlag, *managedNsFlag)
 
-	infoH := handler.NewInfoHandler(clients.Typed)
-	wfH := handler.NewWorkflowHandler(clients.Dynamic)
-	wfTplH := handler.NewWorkflowTemplateHandler(clients.Dynamic)
-	cronH := handler.NewCronWorkflowHandler(clients.Dynamic)
-	eventsH := handler.NewEventsHandler(clients.Dynamic)
+	log.Printf("Connected to Kubernetes API host=%s (context=%s, namespaced=%t, managed=%v)",
+		clients.Host, clients.ActiveContext, serverCfg.Namespaced, serverCfg.ManagedNamespaces)
+
+	infoH := handler.NewInfoHandler(clients.Typed, serverCfg)
+	wfH := handler.NewWorkflowHandler(clients.Dynamic, serverCfg)
+	wfTplH := handler.NewWorkflowTemplateHandler(clients.Dynamic, serverCfg)
+	cronH := handler.NewCronWorkflowHandler(clients.Dynamic, serverCfg)
+	eventsH := handler.NewEventsHandler(clients.Dynamic, serverCfg)
 	logsH := handler.NewLogsHandler(clients.Typed)
 
 	mux := http.NewServeMux()
