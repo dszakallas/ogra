@@ -18,6 +18,30 @@ Key devenv scripts:
 This project defines two devenv processes: `backend` (Go server) and `frontend`
 (Vite dev server). They are started together with `devenv up` or `devenv processes start`.
 
+### Starting development servers
+
+**Always use devenv processes to start the backend and frontend servers.** Do not
+manually run `go run ./cmd/server` or `npm run dev` in separate terminals.
+
+To start both servers:
+
+```bash
+devenv up
+```
+
+Or start them individually:
+
+```bash
+devenv processes start backend
+devenv processes start frontend
+```
+
+The devenv process manager automatically:
+
+- Allocates ports (backend: 8080, frontend: 3000)
+- Sets environment variables (e.g., `VITE_BACKEND_PORT` for the frontend proxy)
+- Manages process lifecycle and restarts
+
 ### Do not orphan the process supervisor
 
 The devenv process manager runs a `supervisord`-style daemon that owns all child
