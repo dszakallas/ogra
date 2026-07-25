@@ -137,20 +137,21 @@ export function WorkflowTemplates({
             return (
               <div
                 key={tmpl.metadata.uid}
-                className="bg-[#121212] border border-zinc-800 rounded-2xl p-5 flex flex-col gap-3.5 shadow-sm hover:border-zinc-700/80 transition-all"
+                onClick={() => navigate(`/templates/${tmpl.metadata.namespace}/${tmpl.metadata.name}`)}
+                className="bg-[#121212] border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col gap-3.5 shadow-sm cursor-pointer group transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="min-w-0">
                     <span className="text-[9px] text-zinc-500 font-mono block uppercase font-black tracking-widest">
                       {tmpl.metadata.namespace}
                     </span>
-                    <h2 className="text-sm font-bold text-zinc-200 truncate font-mono tracking-tight">
+                    <h2 className="text-sm font-bold text-zinc-200 truncate font-mono tracking-tight group-hover:text-indigo-400 transition-colors">
                       {tmpl.metadata.name}
                     </h2>
                   </div>
                   <button
                     data-testid="trigger-template-btn"
-                    onClick={() => handleOpenSubmitForm(tmpl)}
+                    onClick={(e) => { e.stopPropagation(); handleOpenSubmitForm(tmpl); }}
                     className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl px-3.5 py-2 flex items-center gap-1.5 text-xs font-semibold shadow-[0_4px_12px_rgba(99,102,241,0.2)] transition-all active:scale-95 shrink-0"
                   >
                     <Play className="w-3.5 h-3.5" />

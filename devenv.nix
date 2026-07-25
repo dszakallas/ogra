@@ -11,8 +11,8 @@
   ];
 
   profiles = {
-    kind.module = import ./profiles/kind.nix args;
-    agents.module = import ./profiles/agents args;
+    kind.module = import ./devenv/kind.nix args;
+    agents.module = import ./devenv/agents.nix args;
   };
 
   packages = [

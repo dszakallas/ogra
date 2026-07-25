@@ -9,11 +9,13 @@ import {
   CheckCircle2,
   XCircle,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Calendar
 } from 'lucide-react';
 import { CronWorkflow, Workflow } from '../types';
 import cronstrue from 'cronstrue';
-import { getRelativeTime } from '../utils/time';
+import { getRelativeTime, getDuration } from '../utils/time';
+import { PhaseBadge } from '../components/PhaseBadge';
 
 interface CronWorkflowDetailProps {
   cronWorkflows: CronWorkflow[];
@@ -47,10 +49,10 @@ export function CronWorkflowDetail({
           </p>
         </div>
         <button
-          onClick={() => navigate('/cron')}
+          onClick={() => navigate('/resources')}
           className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-2.5 text-sm font-semibold transition-all"
         >
-          Return to Cron List
+          Return to Resources
         </button>
       </div>
     );
@@ -84,7 +86,7 @@ export function CronWorkflowDetail({
       <div className="sticky top-0 z-20 flex items-center justify-between p-3 bg-gray-950/90 border-b border-gray-800/80 backdrop-blur-md">
         <div className="flex items-center gap-2 min-w-0">
           <button
-            onClick={() => navigate('/cron')}
+            onClick={() => navigate('/resources')}
             className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -99,16 +101,19 @@ export function CronWorkflowDetail({
           </div>
         </div>
 
-        {/* Suspend State Badge */}
-        <span
-          className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
             isSuspended
               ? 'bg-rose-950/20 text-rose-500 border-rose-900/40'
               : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/40'
-          }`}
-        >
-          {isSuspended ? 'SUSPENDED' : 'ACTIVE'}
-        </span>
+          }`}>
+            {isSuspended ? 'SUSPENDED' : 'ACTIVE'}
+          </span>
+          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-950/20 text-amber-400 border border-amber-900/40">
+            <Calendar className="w-3 h-3" />
+            CRON
+          </span>
+        </div>
       </div>
 
       <div className="p-4 space-y-4">
@@ -124,7 +129,7 @@ export function CronWorkflowDetail({
                 {getHumanSchedule(scheduleExpr)}
               </h3>
               <div className="text-[11px] text-gray-500 font-mono">
-                Expression: <code className="text-gray-300 bg-gray-900 px-1 py-0.5 rounded">{scheduleExpr}</code>
+                Expression: <code className="text-gray-300 bg-gray-900 px-1 py-0.5 rounded select-text cursor-text">{scheduleExpr}</code>
               </div>
             </div>
           </div>
@@ -205,30 +210,31 @@ export function CronWorkflowDetail({
             </div>
           ) : (
             <div className="space-y-2">
-              {triggeredWorkflows.map((wf) => (
-                <div
-                  key={wf.metadata.uid}
-                  onClick={() => navigate(`/workflows/${wf.metadata.namespace}/${wf.metadata.name}`)}
-                  className="bg-gray-950 border border-gray-900 hover:border-gray-800 rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer transition-all font-mono text-xs"
-                >
-                  <div className="min-w-0">
-                    <h4 className="font-bold text-gray-200 truncate group-hover:text-blue-400 transition-colors">
-                      {wf.metadata.name}
-                    </h4>
-                    <span className="text-[10px] text-gray-500">
-                      Triggered: {wf.status?.startedAt ? getRelativeTime(wf.status.startedAt) : 'Pending'}
+              {triggeredWorkflows.map((wf) => {
+                const phase = wf.status?.phase || 'Pending';
+                return (
+                  <div
+                    key={wf.metadata.uid}
+                    onClick={() => navigate(`/workflows/${wf.metadata.namespace}/${wf.metadata.name}`)}
+                    className="bg-gray-950 border border-gray-900 hover:border-gray-800 rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer transition-all font-mono text-xs"
+                  >
+                    <div className="min-w-0 flex items-center gap-2">
+                      <PhaseBadge phase={phase} size="sm" />
+                      <div className="min-w-0 select-text">
+                        <h4 className="font-bold text-gray-200 truncate">
+                          {wf.metadata.name}
+                        </h4>
+                        <span className="text-[10px] text-gray-500">
+                          Triggered: {wf.status?.startedAt ? getRelativeTime(wf.status.startedAt) : 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-gray-400">
+                      {getDuration(wf.status?.startedAt, wf.status?.finishedAt)}
                     </span>
                   </div>
-                  <div className="shrink-0 flex items-center gap-2">
-                    <span className="text-[10px] text-gray-400">
-                      ⏱ {wf.status?.startedAt ? Math.round((new Date(wf.status.finishedAt || Date.now()).getTime() - new Date(wf.status.startedAt).getTime()) / 1000) : 0}s
-                    </span>
-                    <span className="text-[10px] bg-gray-900 px-1.5 py-0.5 rounded text-gray-400 border border-gray-800">
-                      {wf.status?.phase || 'Pending'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

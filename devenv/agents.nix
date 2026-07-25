@@ -18,6 +18,26 @@ let
         "PLAYWRIGHT_MCP_BROWSER" = "webkit";
       };
     };
+    chrome-devtools = {
+      type = "stdio";
+      command = "npx";
+      args = [
+        "-y"
+        "chrome-devtools-mcp@latest"
+        "--no-usage-statistics"
+        "--no-performance-crux"
+      ];
+      env = {
+      };
+    };
+    devenv = {
+      type = "stdio";
+      command = "devenv";
+      args = [ "mcp" ];
+      env = {
+        DEVENV_ROOT = config.devenv.root;
+      };
+    };
   };
 in
 {

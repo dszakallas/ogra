@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/dszakallas/ogra/internal/config"
 )
@@ -152,4 +154,104 @@ func TestWorkflowLogStreaming(t *testing.T) {
 
 	code, _ := env.doRequest("GET", "/api/v1/workflows/"+env.namespace+"/e2e-log-wf/log?container=main", nil)
 	require.Contains(t, []int{200, 500}, code, "log endpoint should respond")
+}
+
+func TestWorkflowRetry(t *testing.T) {
+	env := setupAPIEnv(t, "retry")
+
+	clients, err := config.NewKubeClients(config.KubeConfigOptions{})
+	require.NoError(t, err)
+
+	wfResource := schema.GroupVersionResource{
+		Group:    "argoproj.io",
+		Version:  "v1alpha1",
+		Resource: "workflows",
+	}
+
+	failWf := &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Workflow",
+			"metadata": map[string]any{
+				"generateName": "retry-fail-test-",
+				"namespace":    env.namespace,
+			},
+			"spec": map[string]any{
+				"entrypoint": "fail",
+				"templates": []any{
+					map[string]any{
+						"name": "fail",
+						"container": map[string]any{
+							"image":   "alpine:latest",
+							"command": []any{"false"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	created, err := clients.Dynamic.Resource(wfResource).Namespace(env.namespace).Create(context.Background(), failWf, metav1.CreateOptions{})
+	require.NoError(t, err)
+	wfName := created.GetName()
+
+	require.Eventually(t, func() bool {
+		got, getErr := clients.Dynamic.Resource(wfResource).Namespace(env.namespace).Get(context.Background(), wfName, metav1.GetOptions{})
+		if getErr != nil {
+			return false
+		}
+		status, _ := got.Object["status"].(map[string]any)
+		if status == nil {
+			return false
+		}
+		phase, _ := status["phase"].(string)
+		return phase == "Failed" || phase == "Error"
+	}, 60*time.Second, 2*time.Second, "workflow should reach Failed or Error phase")
+
+	code, retryResp := env.doRequest("PUT", "/api/v1/workflows/"+env.namespace+"/"+wfName+"/retry", nil)
+	require.Equal(t, 200, code, "retry should succeed on a failed workflow")
+	require.NotNil(t, retryResp)
+
+	retryStatus, _ := retryResp["status"].(map[string]any)
+	if retryStatus != nil {
+		retryPhase, _ := retryStatus["phase"].(string)
+		require.Empty(t, retryPhase, "phase should be cleared after retry")
+	}
+
+	code, _ = env.doRequest("DELETE", "/api/v1/workflows/"+env.namespace+"/"+wfName, nil)
+	require.Equal(t, 200, code)
+}
+
+func TestWorkflowRetryRejectsNonFailed(t *testing.T) {
+	env := setupAPIEnv(t, "retry-reject")
+
+	submitPayload := map[string]any{
+		"resourceKind": "WorkflowTemplate",
+		"resourceName": "bash-simulation-template",
+		"submitOptions": map[string]any{
+			"parameters": []string{"sleep-duration=10"},
+		},
+	}
+	code, submitResp := env.doRequest("POST", "/api/v1/workflows/"+env.namespace+"/submit", submitPayload)
+	require.Equal(t, 201, code)
+
+	meta, _ := submitResp["metadata"].(map[string]any)
+	wfName, _ := meta["name"].(string)
+	require.NotEmpty(t, wfName)
+
+	code, _ = env.doRequest("PUT", "/api/v1/workflows/"+env.namespace+"/"+wfName+"/retry", nil)
+	require.Equal(t, 400, code, "retry should be rejected on a non-failed workflow")
+
+	code, _ = env.doRequest("PUT", "/api/v1/workflows/"+env.namespace+"/"+wfName+"/terminate", nil)
+	require.Equal(t, 200, code)
+
+	code, _ = env.doRequest("DELETE", "/api/v1/workflows/"+env.namespace+"/"+wfName, nil)
+	require.Equal(t, 200, code)
+}
+
+func TestWorkflowRetryNotFound(t *testing.T) {
+	env := setupAPIEnv(t, "retry-404")
+
+	code, _ := env.doRequest("PUT", "/api/v1/workflows/"+env.namespace+"/nonexistent-workflow-xyz/retry", nil)
+	require.Equal(t, 404, code, "retry should return 404 for non-existent workflow")
 }

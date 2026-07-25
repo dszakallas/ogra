@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/dszakallas/ogra/internal/api/workflow"
 	"github.com/dszakallas/ogra/internal/config"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -175,10 +177,16 @@ func (h *WorkflowHandler) SubmitWorkflow(w http.ResponseWriter, r *http.Request,
 }
 
 // PatchWorkflowAction sends merge patches for suspend, resume, stop, and terminate.
+// Retry is handled separately via RetryWorkflow since it requires resetting the status subresource.
 func (h *WorkflowHandler) PatchWorkflowAction(w http.ResponseWriter, r *http.Request, ns, name, action string) {
 	enableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if action == "retry" {
+		h.RetryWorkflow(w, r, ns, name)
 		return
 	}
 
@@ -210,6 +218,50 @@ func (h *WorkflowHandler) PatchWorkflowAction(w http.ResponseWriter, r *http.Req
 	}
 
 	writeJSON(w, patched)
+}
+
+// RetryWorkflow resets a failed/error workflow so the controller re-executes it.
+// It uses the typed Workflow struct to read the current phase, and merge patches
+// to update both the status subresource and the main resource.
+func (h *WorkflowHandler) RetryWorkflow(w http.ResponseWriter, r *http.Request, ns, name string) {
+	raw, err := h.dynClient.Resource(workflowResource).Namespace(ns).Get(r.Context(), name, metav1.GetOptions{})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Workflow not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var typed workflow.Types
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, &typed); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse workflow: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if typed.Status == nil || typed.Status.Phase == nil {
+		http.Error(w, "Workflow has no status yet", http.StatusBadRequest)
+		return
+	}
+
+	phase := *typed.Status.Phase
+	if phase != "Failed" && phase != "Error" {
+		http.Error(w, fmt.Sprintf("Cannot retry workflow in phase %q; only Failed or Error workflows can be retried", phase), http.StatusBadRequest)
+		return
+	}
+
+	statusPatch := `{"status":{"phase":"","message":null,"finishedAt":null},"spec":{"suspend":null,"shutdown":null},"metadata":{"labels":{"workflows.argoproj.io/completed":null}}}`
+	if _, err := h.dynClient.Resource(workflowResource).Namespace(ns).Patch(
+		r.Context(), name, types.MergePatchType, []byte(statusPatch), metav1.PatchOptions{},
+	); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to retry workflow: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	updated, err := h.dynClient.Resource(workflowResource).Namespace(ns).Get(r.Context(), name, metav1.GetOptions{})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to fetch retried workflow: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, updated)
 }
 
 // DeleteWorkflow removes a workflow resource.

@@ -1,7 +1,34 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { Workflow, WorkflowTemplate, CronWorkflow, UserInfo, ServerInfo } from '../types';
 import { apiFetch } from '../utils/api';
 import { ToastContainer, ToastMessage } from '../components/Toast';
+
+export interface ResourceEvent {
+  type: 'ADDED' | 'MODIFIED' | 'DELETED';
+  kind: 'Workflow';
+  name: string;
+  namespace: string;
+  phase?: string;
+  timestamp: string;
+}
+
+export type FavoriteKey = string;
+
+function makeFavoriteKey(kind: string, namespace: string, name: string): FavoriteKey {
+  return `${kind}/${namespace}/${name}`;
+}
+
+function loadFavorites(): Set<FavoriteKey> {
+  try {
+    const raw = localStorage.getItem('ogra-favorites');
+    if (raw) return new Set(JSON.parse(raw));
+  } catch { /* ignore */ }
+  return new Set();
+}
+
+function saveFavorites(favs: Set<FavoriteKey>) {
+  localStorage.setItem('ogra-favorites', JSON.stringify([...favs]));
+}
 
 interface ClusterContextType {
   workflows: Workflow[];
@@ -18,6 +45,12 @@ interface ClusterContextType {
   toasts: ToastMessage[];
   addToast: (message: string, type?: 'error' | 'success' | 'info', title?: string) => void;
   dismissToast: (id: string) => void;
+
+  favorites: Set<FavoriteKey>;
+  toggleFavorite: (kind: string, namespace: string, name: string) => void;
+  isFavorite: (kind: string, namespace: string, name: string) => boolean;
+
+  eventHistory: ResourceEvent[];
 
   // Actions
   handleWorkflowSubmit: (namespace: string, templateName: string, params: Record<string, string>) => Promise<Workflow>;
@@ -47,6 +80,8 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [favorites, setFavorites] = useState<Set<FavoriteKey>>(loadFavorites);
+  const [eventHistory, setEventHistory] = useState<ResourceEvent[]>([]);
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -58,6 +93,21 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
   const dismissToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
+
+  const toggleFavorite = useCallback((kind: string, namespace: string, name: string) => {
+    setFavorites((prev) => {
+      const key = makeFavoriteKey(kind, namespace, name);
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      saveFavorites(next);
+      return next;
+    });
+  }, []);
+
+  const isFavorite = useCallback((kind: string, namespace: string, name: string) => {
+    return favorites.has(makeFavoriteKey(kind, namespace, name));
+  }, [favorites]);
 
   const fetchData = async () => {
     try {
@@ -103,6 +153,15 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
         const { type, object } = data;
         
         if (!object) return;
+
+        setEventHistory((prev) => [{
+          type,
+          kind: 'Workflow' as const,
+          name: object.metadata?.name || '',
+          namespace: object.metadata?.namespace || '',
+          phase: object.status?.phase,
+          timestamp: new Date().toISOString()
+        }, ...prev].slice(0, 200));
 
         setWorkflows((prev) => {
           const index = prev.findIndex((w) => w.metadata.uid === object.metadata.uid);
@@ -243,6 +302,10 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
         toasts,
         addToast,
         dismissToast,
+        favorites,
+        toggleFavorite,
+        isFavorite,
+        eventHistory,
         handleWorkflowSubmit,
         handleSuspendWorkflow,
         handleResumeWorkflow,
