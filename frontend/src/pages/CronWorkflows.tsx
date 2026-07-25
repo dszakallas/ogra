@@ -51,7 +51,7 @@ export function CronWorkflows({
       {/* Cron List */}
       <div className="space-y-4">
         {filteredCrons.length === 0 ? (
-          <div className="bg-[#121212] border border-zinc-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 shadow-inner">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 shadow-inner">
             <AlertCircle className="w-9 h-9 text-zinc-600" />
             <h3 className="text-sm font-semibold text-zinc-300 font-display">No CronWorkflows found</h3>
             <p className="text-xs text-zinc-500 max-w-sm">
@@ -71,7 +71,7 @@ export function CronWorkflows({
               <div
                 key={cron.metadata.uid}
                 onClick={() => navigate(`/cron/${cron.metadata.namespace}/${cron.metadata.name}`)}
-                className="bg-[#121212] border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col gap-3.5 shadow-sm cursor-pointer group transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+                className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col gap-3.5 shadow-sm cursor-pointer group transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
               >
                 {/* Header Row */}
                 <div className="flex justify-between items-start gap-4">

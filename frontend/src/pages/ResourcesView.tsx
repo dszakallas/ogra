@@ -48,7 +48,7 @@ export function ResourcesView() {
         </h1>
       </div>
 
-      <div className="flex border border-zinc-800/80 bg-[#121212] p-1.5 rounded-2xl select-none shadow-sm">
+      <div className="flex border border-zinc-800/80 bg-zinc-900 p-1.5 rounded-2xl select-none shadow-sm">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -106,7 +106,7 @@ export function ResourcesView() {
 
 function EmptyState({ message, hint }: { message: string; hint?: string }) {
   return (
-    <div className="bg-[#121212] border border-zinc-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 shadow-inner">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 shadow-inner">
       <AlertCircle className="w-9 h-9 text-zinc-600" />
       <h3 className="text-sm font-semibold text-zinc-300 font-display">{message}</h3>
       {hint && <p className="text-xs text-zinc-500 max-w-sm">{hint}</p>}
@@ -119,7 +119,7 @@ function EventRow({ event }: { event: ResourceEvent }) {
   const typeLabel = event.type === 'ADDED' ? 'CREATED' : event.type === 'DELETED' ? 'DELETED' : 'UPDATED';
 
   return (
-    <div className="bg-[#121212] border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-3 font-mono text-xs">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-3 font-mono text-xs">
       <div className="flex items-center gap-2 min-w-0">
         <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wider ${typeColor}`}>
           {typeLabel}

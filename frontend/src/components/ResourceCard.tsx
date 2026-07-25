@@ -104,7 +104,7 @@ export function ResourceCard({ kind, resource }: ResourceCardProps) {
   return (
     <div
       onClick={() => navigate(getRoute(kind, namespace, name))}
-      className="bg-[#121212] border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-4 flex flex-col gap-3 transition-all cursor-pointer group shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+      className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-4 flex flex-col gap-3 transition-all cursor-pointer group shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">

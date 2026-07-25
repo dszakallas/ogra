@@ -41,7 +41,7 @@ export function WorkflowTemplateDetail({
 
   if (!template) {
     return (
-      <div className="max-w-md mx-auto my-12 p-6 bg-gray-950 border border-gray-800 rounded-xl text-center space-y-4">
+      <div className="max-w-md mx-auto my-12 p-6 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-4">
         <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
         <div className="space-y-1">
           <h2 className="text-lg font-bold text-white">Template Not Found</h2>
@@ -70,21 +70,21 @@ export function WorkflowTemplateDetail({
   );
 
   return (
-    <div className="flex flex-col min-h-screen pb-16 bg-[#07090E] text-white max-w-2xl mx-auto w-full border-x border-gray-900/40">
-      <div className="sticky top-0 z-20 flex items-center justify-between p-3 bg-gray-950/90 border-b border-gray-800/80 backdrop-blur-md">
+    <div className="flex flex-col min-h-screen pb-16 bg-zinc-950 text-white max-w-2xl mx-auto w-full border-x border-zinc-900/40">
+      <div className="sticky top-0 z-20 flex items-center justify-between p-3 bg-zinc-950/90 border-b border-zinc-800/80 backdrop-blur-md">
         <div className="flex items-center gap-2 min-w-0">
           <button
             data-testid="template-detail-back-btn"
             onClick={() => navigate('/resources')}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-900 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="min-w-0">
-            <h1 className="text-sm font-bold truncate font-mono text-gray-200">
+            <h1 className="text-sm font-bold truncate font-mono text-zinc-200">
               {template.metadata.name}
             </h1>
-            <p className="text-[10px] text-gray-500 font-mono uppercase tracking-wider">
+            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
               {template.metadata.namespace}
             </p>
           </div>
@@ -100,7 +100,7 @@ export function WorkflowTemplateDetail({
             className={`p-1.5 rounded-lg transition-all ${
               favorited
                 ? 'text-amber-400 bg-amber-950/30 border border-amber-900/40'
-                : 'text-gray-500 hover:text-gray-300 border border-transparent hover:border-gray-800'
+                : 'text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-zinc-800'
             }`}
             title={favorited ? 'Remove from favorites' : 'Add to favorites'}
           >
@@ -110,36 +110,36 @@ export function WorkflowTemplateDetail({
       </div>
 
       <div className="p-4 space-y-4">
-        <div className="bg-gray-950 border border-gray-900 rounded-xl p-4 space-y-2">
-          <span className="text-[10px] font-mono font-bold tracking-wider text-gray-500">
+        <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-2">
+          <span className="text-[10px] font-mono font-bold tracking-wider text-zinc-500">
             DESCRIPTION
           </span>
-          <p className="text-sm text-gray-300 leading-relaxed select-text">{description}</p>
+          <p className="text-sm text-zinc-300 leading-relaxed select-text">{description}</p>
         </div>
 
         <div className="space-y-2">
-          <span className="text-[10px] font-mono font-bold tracking-wider text-gray-500">
+          <span className="text-[10px] font-mono font-bold tracking-wider text-zinc-500">
             STATISTICS
           </span>
           <div className="grid grid-cols-2 gap-2 font-mono text-xs">
-            <div className="bg-gray-950 p-3 rounded-xl border border-gray-900 flex justify-between items-center">
+            <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 flex justify-between items-center">
               <span className="text-indigo-400 flex items-center gap-1">
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Parameters</span>
               </span>
-              <span className="font-bold text-gray-300">{paramsCount}</span>
+              <span className="font-bold text-zinc-300">{paramsCount}</span>
             </div>
-            <div className="bg-gray-950 p-3 rounded-xl border border-gray-900 flex justify-between items-center">
+            <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 flex justify-between items-center">
               <span className="text-cyan-400 flex items-center gap-1">
                 <History className="w-3.5 h-3.5" />
                 <span>Templates</span>
               </span>
-              <span className="font-bold text-gray-300">{stepsCount}</span>
+              <span className="font-bold text-zinc-300">{stepsCount}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-950 border border-gray-800 rounded-xl p-3">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
           <button
             data-testid="trigger-template-detail-btn"
             onClick={() => {
@@ -160,14 +160,14 @@ export function WorkflowTemplateDetail({
 
         <div className="space-y-3">
           <div className="flex items-center gap-1.5">
-            <History className="w-4 h-4 text-gray-400" />
-            <span className="text-[10px] font-mono font-bold tracking-wider text-gray-500">
+            <History className="w-4 h-4 text-zinc-400" />
+            <span className="text-[10px] font-mono font-bold tracking-wider text-zinc-500">
               INSTANTIATED WORKFLOWS ({instantiatedWorkflows.length})
             </span>
           </div>
 
           {instantiatedWorkflows.length === 0 ? (
-            <div className="text-xs text-gray-500 italic bg-gray-950 p-4 rounded-xl border border-gray-900 text-center">
+            <div className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-center">
               No workflows have been instantiated from this template yet.
             </div>
           ) : (
@@ -178,20 +178,20 @@ export function WorkflowTemplateDetail({
                   <div
                     key={wf.metadata.uid}
                     onClick={() => navigate(`/workflows/${wf.metadata.namespace}/${wf.metadata.name}`)}
-                    className="bg-gray-950 border border-gray-900 hover:border-gray-800 rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer transition-all font-mono text-xs"
+                    className="bg-zinc-950 border border-zinc-900 hover:border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer transition-all font-mono text-xs"
                   >
                     <div className="min-w-0 flex items-center gap-2">
                       <PhaseBadge phase={phase} size="sm" />
                       <div className="min-w-0 select-text">
-                        <h4 className="font-bold text-gray-200 truncate">
+                        <h4 className="font-bold text-zinc-200 truncate">
                           {wf.metadata.name}
                         </h4>
-                        <span className="text-[10px] text-gray-500">
+                        <span className="text-[10px] text-zinc-500">
                           Started: {wf.status?.startedAt ? getRelativeTime(wf.status.startedAt) : 'Pending'}
                         </span>
                       </div>
                     </div>
-                    <span className="shrink-0 text-[10px] text-gray-400">
+                    <span className="shrink-0 text-[10px] text-zinc-400">
                       {getDuration(wf.status?.startedAt, wf.status?.finishedAt)}
                     </span>
                   </div>
@@ -204,7 +204,7 @@ export function WorkflowTemplateDetail({
 
       {showTriggerModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-40 p-4 animate-fade-in backdrop-blur-sm">
-          <div className="bg-[#121212] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl mb-12">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl mb-12">
             <div className="flex items-center justify-between p-4 border-b border-zinc-800/80">
               <div className="min-w-0">
                 <span className="text-[9px] font-mono text-zinc-500 block uppercase font-black tracking-widest">

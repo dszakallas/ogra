@@ -16,18 +16,18 @@ export function ParameterInput({ parameter, value, onChange }: ParameterInputPro
   const isLong = description && description.length > 80;
 
   return (
-    <div className="flex flex-col gap-1 w-full bg-gray-900/20 border border-gray-800/60 p-3 rounded-lg focus-within:border-blue-600/60 transition-colors">
-      <label className="text-xs font-mono font-semibold text-gray-300 flex items-center justify-between">
+    <div className="flex flex-col gap-1 w-full bg-zinc-900/20 border border-zinc-800/60 p-3 rounded-lg focus-within:border-blue-600/60 transition-colors">
+      <label className="text-xs font-mono font-semibold text-zinc-300 flex items-center justify-between">
         <span>{name}</span>
         {defaultValue && (
-          <span className="text-[10px] text-gray-500 font-normal">
-            Default: <code className="bg-gray-950 px-1 py-0.5 rounded text-gray-400">{defaultValue}</code>
+          <span className="text-[10px] text-zinc-500 font-normal">
+            Default: <code className="bg-zinc-950 px-1 py-0.5 rounded text-zinc-400">{defaultValue}</code>
           </span>
         )}
       </label>
 
       {description && (
-        <span className="text-[11px] text-gray-400 leading-relaxed">
+        <span className="text-[11px] text-zinc-400 leading-relaxed">
           {description}
         </span>
       )}
@@ -37,7 +37,7 @@ export function ParameterInput({ parameter, value, onChange }: ParameterInputPro
           <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-500 font-mono"
+            className="w-full bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-500 font-mono"
           >
             {enumValues.map((val) => (
               <option key={val} value={val}>
@@ -51,7 +51,7 @@ export function ParameterInput({ parameter, value, onChange }: ParameterInputPro
             value={value}
             placeholder={placeholder}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-500 font-sans leading-relaxed"
+            className="w-full bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-500 font-sans leading-relaxed"
           />
         ) : (
           <input
@@ -59,7 +59,7 @@ export function ParameterInput({ parameter, value, onChange }: ParameterInputPro
             value={value}
             placeholder={placeholder}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-500 font-mono"
+            className="w-full bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-500 font-mono"
           />
         )}
       </div>

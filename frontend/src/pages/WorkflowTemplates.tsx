@@ -121,7 +121,7 @@ export function WorkflowTemplates({
       {/* Templates List */}
       <div className="space-y-4">
         {filteredTemplates.length === 0 ? (
-          <div className="bg-[#121212] border border-zinc-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 shadow-inner">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 shadow-inner">
             <AlertCircle className="w-9 h-9 text-zinc-600" />
             <h3 className="text-sm font-semibold text-zinc-300 font-display">No templates found</h3>
             <p className="text-xs text-zinc-500 max-w-sm">
@@ -138,7 +138,7 @@ export function WorkflowTemplates({
               <div
                 key={tmpl.metadata.uid}
                 onClick={() => navigate(`/templates/${tmpl.metadata.namespace}/${tmpl.metadata.name}`)}
-                className="bg-[#121212] border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col gap-3.5 shadow-sm cursor-pointer group transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+                className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col gap-3.5 shadow-sm cursor-pointer group transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="min-w-0">
@@ -176,7 +176,7 @@ export function WorkflowTemplates({
       {/* Dynamic Slide-up form dialog */}
       {activeTemplate && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-40 p-4 animate-fade-in backdrop-blur-sm">
-          <div className="bg-[#121212] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl mb-12">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl mb-12">
             {/* Form Header */}
             <div className="flex items-center justify-between p-4 border-b border-zinc-800/80">
               <div className="min-w-0">

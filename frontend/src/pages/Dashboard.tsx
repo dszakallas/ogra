@@ -92,7 +92,7 @@ function KindCard({ icon, title, count, stats, onClick }: KindCardProps) {
   return (
     <button
       onClick={onClick}
-      className="bg-[#121212] border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-5 text-left transition-all group shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+      className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-5 text-left transition-all group shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">

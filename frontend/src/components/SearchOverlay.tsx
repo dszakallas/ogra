@@ -208,7 +208,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative bg-[#121212] border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+        className="relative bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 p-3 border-b border-zinc-800">

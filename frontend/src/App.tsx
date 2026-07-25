@@ -56,8 +56,8 @@ function AppContent() {
   const currentPath = location.pathname;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-zinc-100 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
-      <header className="sticky top-0 z-30 bg-[#0A0A0A]/85 border-b border-zinc-800/80 backdrop-blur-md px-4 py-3 flex items-center justify-between">
+    <div className="flex flex-col min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+      <header className="sticky top-0 z-30 bg-zinc-950/85 border-b border-zinc-800/80 backdrop-blur-md px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-indigo-600 w-9 h-9 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.3)]">
             <Layers className="w-5 h-5 text-white" />
@@ -70,7 +70,7 @@ function AppContent() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 bg-[#121212] border border-zinc-800/80 px-2 py-1.5 rounded-lg text-[9px] font-mono text-zinc-400 mr-1">
+          <span className="flex items-center gap-1 bg-zinc-900 border border-zinc-800/80 px-2 py-1.5 rounded-lg text-[9px] font-mono text-zinc-400 mr-1">
             <span className={`inline-block w-1.5 h-1.5 rounded-full ${sseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
             <span>WATCH</span>
           </span>
@@ -78,7 +78,7 @@ function AppContent() {
           <button
             data-testid="search-btn"
             onClick={() => setSearchOpen(true)}
-            className="p-2 bg-[#121212] border border-zinc-800 text-zinc-400 hover:text-white rounded-xl transition-all flex items-center justify-center"
+            className="p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded-xl transition-all flex items-center justify-center"
             title="Search (press /)"
           >
             <Search className="w-4 h-4" />
@@ -87,7 +87,7 @@ function AppContent() {
           <button
             data-testid="refresh-btn"
             onClick={fetchData}
-            className="p-2 bg-[#121212] border border-zinc-800 text-zinc-400 hover:text-white rounded-xl transition-all flex items-center justify-center"
+            className="p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded-xl transition-all flex items-center justify-center"
             title="Refresh current data"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -145,7 +145,7 @@ function AppContent() {
         )}
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#121212]/95 border-t border-zinc-800 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] backdrop-blur-md">
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-zinc-900/95 border-t border-zinc-800 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] backdrop-blur-md">
         <nav className="max-w-md mx-auto py-3 px-6 flex items-center justify-around select-none">
           <NavLink
             data-testid="nav-dashboard"

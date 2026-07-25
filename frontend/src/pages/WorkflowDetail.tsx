@@ -105,11 +105,11 @@ export function WorkflowDetail({
       );
     }
     return (
-      <div className="max-w-md mx-auto my-12 p-6 bg-gray-950 border border-gray-800 rounded-xl text-center space-y-4">
+      <div className="max-w-md mx-auto my-12 p-6 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-4">
         <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
         <div className="space-y-1">
           <h2 className="text-lg font-bold text-white">Workflow Not Found</h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-zinc-500">
             The workflow "{name}" in namespace "{namespace}" could not be located in our cluster.
           </p>
         </div>
@@ -154,22 +154,22 @@ export function WorkflowDetail({
   const workflowParams = workflow.spec?.arguments?.parameters || [];
 
   return (
-    <div className="flex flex-col min-h-screen pb-16 bg-[#07090E] text-white max-w-2xl mx-auto w-full border-x border-gray-900/40">
+    <div className="flex flex-col min-h-screen pb-16 bg-zinc-950 text-white max-w-2xl mx-auto w-full border-x border-zinc-900/40">
       {/* Top sticky action header */}
-      <div className="sticky top-0 z-20 flex items-center justify-between p-3 bg-gray-950/90 border-b border-gray-800/80 backdrop-blur-md">
+      <div className="sticky top-0 z-20 flex items-center justify-between p-3 bg-zinc-950/90 border-b border-zinc-800/80 backdrop-blur-md">
         <div className="flex items-center gap-2 min-w-0">
           <button
             data-testid="workflow-detail-back-btn"
             onClick={() => navigate('/resources')}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-900 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="min-w-0">
-            <h1 className="text-sm font-bold truncate font-mono text-gray-200">
+            <h1 className="text-sm font-bold truncate font-mono text-zinc-200">
               {workflow.metadata.name}
             </h1>
-            <p className="text-[10px] text-gray-500 font-mono uppercase tracking-wider">
+            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
               {workflow.metadata.namespace}
             </p>
           </div>
@@ -187,7 +187,7 @@ export function WorkflowDetail({
               className={`p-1.5 rounded-lg transition-all ${
                 favorited
                   ? 'text-amber-400 bg-amber-950/30 border border-amber-900/40'
-                  : 'text-gray-500 hover:text-gray-300 border border-transparent hover:border-gray-800'
+                  : 'text-zinc-500 hover:text-zinc-300 border border-transparent hover:border-zinc-800'
               }`}
               title={favorited ? 'Remove from favorites' : 'Add to favorites'}
             >
@@ -199,13 +199,13 @@ export function WorkflowDetail({
             <button
               data-testid="workflow-actions-menu"
               onClick={() => setShowActionsMenu(!showActionsMenu)}
-              className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-900 transition-colors bg-gray-900 border border-gray-800"
+              className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors bg-zinc-900 border border-zinc-800"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
 
             {showActionsMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-[#121212] border border-gray-800/95 rounded-2xl shadow-2xl py-2 z-30 font-sans">
+              <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800/95 rounded-2xl shadow-2xl py-2 z-30 font-sans">
                 <button
                   onClick={() =>
                     handleAction(() => {
@@ -221,7 +221,7 @@ export function WorkflowDetail({
                       }
                     })
                   }
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-gray-300 hover:bg-gray-900/60 flex items-center gap-2"
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-900/60 flex items-center gap-2"
                 >
                   <Activity className="w-4 h-4 text-cyan-400" />
                   <span>Resubmit (New Copy)</span>
@@ -236,7 +236,7 @@ export function WorkflowDetail({
                       }
                     })
                   }
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-500 hover:bg-rose-950/20 flex items-center gap-2 border-t border-gray-800/60"
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-500 hover:bg-rose-950/20 flex items-center gap-2 border-t border-zinc-800/60"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>Delete workflow</span>
@@ -249,7 +249,7 @@ export function WorkflowDetail({
 
       <div className="p-4 space-y-4">
         {/* State banner */}
-        <div className="bg-gray-950 border border-gray-900 rounded-xl p-4 space-y-3 font-mono text-xs shadow-md">
+        <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-3 font-mono text-xs shadow-md">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <PhaseBadge phase={phase} size="lg" />
@@ -260,8 +260,8 @@ export function WorkflowDetail({
               )}
             </div>
             <div className="flex flex-col text-right text-[11px]">
-              <span className="text-gray-500 font-bold">DURATION</span>
-              <span className="text-gray-200 font-bold mt-0.5">{getDuration(workflow.status?.startedAt, workflow.status?.finishedAt)}</span>
+              <span className="text-zinc-500 font-bold">DURATION</span>
+              <span className="text-zinc-200 font-bold mt-0.5">{getDuration(workflow.status?.startedAt, workflow.status?.finishedAt)}</span>
             </div>
           </div>
 
@@ -286,7 +286,7 @@ export function WorkflowDetail({
         </div>
 
         {/* Controls island */}
-        <div className="bg-gray-950 border border-gray-800 rounded-xl p-3">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
           <div className="flex flex-wrap gap-2">
             {isRunning && (
               <button
@@ -338,7 +338,7 @@ export function WorkflowDetail({
       </div>
 
       {/* Tab navigation bar */}
-      <div className="flex border border-gray-800/80 bg-[#121212] p-1.5 rounded-2xl mx-4 mb-4 select-none shadow-sm">
+      <div className="flex border border-zinc-800/80 bg-zinc-900 p-1.5 rounded-2xl mx-4 mb-4 select-none shadow-sm">
         {(['SUMMARY', 'NODES', 'TIMELINE', 'LOGS'] as TabType[]).map((tab) => (
           <button
             key={tab}
@@ -347,7 +347,7 @@ export function WorkflowDetail({
             className={`flex-1 text-center py-2.5 text-[11px] font-mono font-bold rounded-xl transition-all duration-150 ${
               activeTab === tab
                 ? 'bg-indigo-600 text-white font-extrabold shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             {tab}
@@ -361,21 +361,21 @@ export function WorkflowDetail({
         {activeTab === 'SUMMARY' && (
           <div className="space-y-5 pb-8">
             <div className="space-y-2">
-              <h3 className="text-[10px] font-mono font-black tracking-widest text-gray-500 uppercase">
+              <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
                 SUBMISSION PARAMETERS
               </h3>
               {workflowParams.length === 0 ? (
-                <div className="text-xs text-gray-500 italic bg-gray-950 p-4 rounded-xl border border-gray-900 text-center shadow-sm">
+                <div className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-center shadow-sm">
                   No parameters were specified for this execution.
                 </div>
               ) : (
-                <div className="bg-gray-950 border border-gray-900 rounded-xl divide-y divide-gray-900 overflow-hidden shadow-md">
+                <div className="bg-zinc-950 border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden shadow-md">
                   {workflowParams.map((p) => (
                     <div key={p.name} className="p-3.5 flex flex-col gap-1.5 text-xs">
-                      <span className="font-mono text-[10px] font-bold text-gray-400">
+                      <span className="font-mono text-[10px] font-bold text-zinc-400">
                         {p.name}
                       </span>
-                      <code className="text-gray-300 bg-gray-900 px-3 py-2 rounded-xl border border-gray-800/80 break-all leading-relaxed font-mono text-[11px] select-text cursor-text">
+                      <code className="text-zinc-300 bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800/80 break-all leading-relaxed font-mono text-[11px] select-text cursor-text">
                         {p.value || '""'}
                       </code>
                     </div>
@@ -385,50 +385,50 @@ export function WorkflowDetail({
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-[10px] font-mono font-black tracking-widest text-gray-500 uppercase">
+              <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
                 NODE STATS (PODS: {podNodes.length})
               </h3>
               <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                <div className="bg-gray-950 border border-gray-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="bg-zinc-950 border border-zinc-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
                   <span className="text-emerald-500 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Succeeded</span>
-                  <span className="font-bold text-gray-300">{nodeStats.Succeeded}</span>
+                  <span className="font-bold text-zinc-300">{nodeStats.Succeeded}</span>
                 </div>
-                <div className="bg-gray-950 border border-gray-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="bg-zinc-950 border border-zinc-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
                   <span className="text-indigo-400 font-bold flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Running</span>
-                  <span className="font-bold text-gray-300">{nodeStats.Running}</span>
+                  <span className="font-bold text-zinc-300">{nodeStats.Running}</span>
                 </div>
-                <div className="bg-gray-950 border border-gray-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="bg-zinc-950 border border-zinc-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
                   <span className="text-amber-500 font-bold flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Pending</span>
-                  <span className="font-bold text-gray-300">{nodeStats.Pending}</span>
+                  <span className="font-bold text-zinc-300">{nodeStats.Pending}</span>
                 </div>
-                <div className="bg-gray-950 border border-gray-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="bg-zinc-950 border border-zinc-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
                   <span className="text-rose-400 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" />Failed</span>
-                  <span className="font-bold text-gray-300">{nodeStats.Failed + nodeStats.Error}</span>
+                  <span className="font-bold text-zinc-300">{nodeStats.Failed + nodeStats.Error}</span>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-[10px] font-mono font-black tracking-widest text-gray-500 uppercase">
+              <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
                 METADATA DETAILS
               </h3>
-                <div className="bg-gray-950 border border-gray-900 rounded-xl p-4 space-y-3.5 font-mono text-[11px] text-gray-400 shadow-md select-text">
+                <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-3.5 font-mono text-[11px] text-zinc-400 shadow-md select-text">
                 <div className="flex justify-between gap-4">
                   <span>UID:</span>
-                  <span className="text-gray-200 truncate max-w-[200px] text-right font-semibold">{workflow.metadata.uid}</span>
+                  <span className="text-zinc-200 truncate max-w-[200px] text-right font-semibold">{workflow.metadata.uid}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span>RESOURCE VERSION:</span>
-                  <span className="text-gray-200 font-semibold">{workflow.metadata.resourceVersion}</span>
+                  <span className="text-zinc-200 font-semibold">{workflow.metadata.resourceVersion}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span>CREATED AT:</span>
-                  <span className="text-gray-200 font-semibold">
+                  <span className="text-zinc-200 font-semibold">
                     {new Date(workflow.metadata.creationTimestamp).toLocaleString()}
                   </span>
                 </div>
                 {workflow.spec?.workflowTemplateRef?.name && (
-                  <div className="flex justify-between items-center gap-4 border-t border-gray-900/60 pt-2.5">
+                  <div className="flex justify-between items-center gap-4 border-t border-zinc-900/60 pt-2.5">
                     <span>SOURCE TEMPLATE:</span>
                     <button
                       onClick={() => navigate(`/templates/${namespace}/${workflow.spec.workflowTemplateRef!.name}`)}
@@ -447,12 +447,12 @@ export function WorkflowDetail({
         {/* NODES TAB */}
         {activeTab === 'NODES' && (
           <div className="space-y-3.5 pb-8">
-            <h3 className="text-[10px] font-mono font-black tracking-widest text-gray-500 uppercase">
+            <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
               Execution Nodes Tree ({podNodes.length} Pods)
             </h3>
 
             {podNodes.length === 0 ? (
-              <div className="text-xs text-gray-500 italic bg-gray-950 p-4 rounded-xl border border-gray-900 text-center shadow-sm">
+              <div className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-center shadow-sm">
                 Preparing scheduling tree... No nodes initialized.
               </div>
             ) : (
@@ -462,46 +462,46 @@ export function WorkflowDetail({
                   return (
                     <div
                       key={node.id}
-                      className="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden shadow-sm"
+                      className="bg-zinc-950 border border-zinc-900 rounded-xl overflow-hidden shadow-sm"
                     >
                       <div
                         onClick={() => toggleExpandNode(node.id)}
-                        className="p-4 flex items-center justify-between gap-3 hover:bg-gray-900/60 cursor-pointer transition-colors"
+                        className="p-4 flex items-center justify-between gap-3 hover:bg-zinc-900/60 cursor-pointer transition-colors"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <PhaseBadge phase={node.phase} size="sm" />
-                          <span className="text-xs font-mono font-bold text-gray-200 truncate">
+                          <span className="text-xs font-mono font-bold text-zinc-200 truncate">
                             {node.displayName}
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-gray-500">
+                        <span className="text-[10px] font-mono text-zinc-500">
                           {node.phase === 'Running' ? 'Ongoing' : 'Finished'}
                         </span>
                       </div>
 
                       {isExpanded && (
-                        <div className="p-4 border-t border-gray-900/80 bg-gray-900/30 space-y-4 font-mono text-[11px] text-gray-400 animate-fade-in select-text">
+                        <div className="p-4 border-t border-zinc-900/80 bg-zinc-900/30 space-y-4 font-mono text-[11px] text-zinc-400 animate-fade-in select-text">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <span className="block text-gray-500 uppercase text-[9px] font-black">TYPE:</span>
-                              <span className="text-gray-300 font-semibold">{node.type}</span>
+                              <span className="block text-zinc-500 uppercase text-[9px] font-black">TYPE:</span>
+                              <span className="text-zinc-300 font-semibold">{node.type}</span>
                             </div>
                             <div>
-                              <span className="block text-gray-500 uppercase text-[9px] font-black">POD IP:</span>
-                              <span className="text-gray-300 font-semibold">{node.podIP || 'N/A'}</span>
+                              <span className="block text-zinc-500 uppercase text-[9px] font-black">POD IP:</span>
+                              <span className="text-zinc-300 font-semibold">{node.podIP || 'N/A'}</span>
                             </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <span className="block text-gray-500 uppercase text-[9px] font-black">STARTED:</span>
-                              <span className="text-gray-300 font-semibold">
+                              <span className="block text-zinc-500 uppercase text-[9px] font-black">STARTED:</span>
+                              <span className="text-zinc-300 font-semibold">
                                 {node.startedAt ? new Date(node.startedAt).toLocaleTimeString() : 'Pending'}
                               </span>
                             </div>
                             <div>
-                              <span className="block text-gray-500 uppercase text-[9px] font-black">FINISHED:</span>
-                              <span className="text-gray-300 font-semibold">
+                              <span className="block text-zinc-500 uppercase text-[9px] font-black">FINISHED:</span>
+                              <span className="text-zinc-300 font-semibold">
                                 {node.finishedAt ? new Date(node.finishedAt).toLocaleTimeString() : 'Running...'}
                               </span>
                             </div>
@@ -529,7 +529,7 @@ export function WorkflowDetail({
                             </div>
                           )}
 
-                          <div className="flex gap-2 pt-3 border-t border-gray-800/50">
+                          <div className="flex gap-2 pt-3 border-t border-zinc-800/50">
                             <button
                               onClick={() => {
                                 setSelectedPodId(node.id);
@@ -554,16 +554,16 @@ export function WorkflowDetail({
         {/* TIMELINE TAB */}
         {activeTab === 'TIMELINE' && (
           <div className="space-y-4 pb-8">
-            <h3 className="text-[10px] font-mono font-black tracking-widest text-gray-500 uppercase">
+            <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
               Sequential Execution Timeline
             </h3>
 
             {podNodes.length === 0 ? (
-              <div className="text-xs text-gray-500 italic bg-gray-950 p-4 rounded-xl border border-gray-900 text-center shadow-sm">
+              <div className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-center shadow-sm">
                 Timeline unavailable. Nodes not scheduled.
               </div>
             ) : (
-              <div className="bg-gray-950 border border-gray-900 rounded-xl p-5 space-y-4.5 font-mono text-[11px] shadow-md">
+              <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-5 space-y-4.5 font-mono text-[11px] shadow-md">
                 {podNodes.map((node) => {
                   const baseStart = workflow.status?.startedAt ? new Date(workflow.status.startedAt).getTime() : Date.now();
                   const nodeStart = node.startedAt ? new Date(node.startedAt).getTime() : baseStart;
@@ -582,16 +582,16 @@ export function WorkflowDetail({
                   } else if (node.phase === 'Failed' || node.phase === 'Error') {
                     colorClass = 'bg-rose-600/85 border-rose-400';
                   } else if (node.phase === 'Pending') {
-                    colorClass = 'bg-gray-800 border-gray-700';
+                    colorClass = 'bg-zinc-800 border-zinc-700';
                   }
 
                   return (
                     <div key={node.id} className="space-y-1.5 select-none">
-                      <div className="flex justify-between text-[10px] text-gray-400">
-                        <span className="font-bold text-gray-300">{node.displayName}</span>
-                        <span className="text-gray-500">{duration}s</span>
+                      <div className="flex justify-between text-[10px] text-zinc-400">
+                        <span className="font-bold text-zinc-300">{node.displayName}</span>
+                        <span className="text-zinc-500">{duration}s</span>
                       </div>
-                      <div className="w-full bg-gray-950 h-7 rounded-lg relative border border-gray-800/80 overflow-hidden">
+                      <div className="w-full bg-zinc-950 h-7 rounded-lg relative border border-zinc-800/80 overflow-hidden">
                         <div
                           style={{
                             width: `${widthPercent}%`,
@@ -606,7 +606,7 @@ export function WorkflowDetail({
                   );
                 })}
 
-                <div className="border-t border-gray-800/80 pt-3.5 flex justify-between text-[9px] text-gray-600 uppercase tracking-wide font-black">
+                <div className="border-t border-zinc-800/80 pt-3.5 flex justify-between text-[9px] text-zinc-600 uppercase tracking-wide font-black">
                   <span>0s</span>
                   <span>30s</span>
                   <span>60s</span>
