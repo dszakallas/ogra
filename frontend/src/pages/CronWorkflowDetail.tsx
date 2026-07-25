@@ -45,7 +45,7 @@ export function CronWorkflowDetail({
 
   if (!cron) {
     return (
-      <div className="max-w-md mx-auto my-12 p-6 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-4">
+      <div className="not-found">
         <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
         <div className="space-y-1">
           <h2 className="text-lg font-bold text-white">CronWorkflow Not Found</h2>
@@ -86,13 +86,13 @@ export function CronWorkflowDetail({
   };
 
   return (
-    <div className="flex flex-col min-h-screen pb-16 bg-zinc-950 text-white max-w-2xl mx-auto w-full border-x border-zinc-900/40">
+    <div className="detail-page">
       {/* Top sticky header */}
-      <div className="sticky top-0 z-20 flex items-center justify-between p-3 bg-zinc-950/90 border-b border-zinc-800/80 backdrop-blur-md">
+      <div className="detail-header">
         <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={() => navigate('/resources')}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            className="icon-btn"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -100,7 +100,7 @@ export function CronWorkflowDetail({
             <h1 className="text-sm font-bold truncate font-mono text-zinc-200">
               {cron.metadata.name}
             </h1>
-            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
+            <p className="meta-label">
               {cron.metadata.namespace}
             </p>
           </div>
@@ -137,7 +137,7 @@ export function CronWorkflowDetail({
       <div className="p-4 space-y-4">
         {/* Schedule Display */}
         <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-2">
-          <span className="text-[10px] font-mono font-bold tracking-wider text-zinc-500">
+          <span className="section-title">
             CRON JOB TIMING
           </span>
           <div className="flex items-start gap-2">
@@ -159,18 +159,18 @@ export function CronWorkflowDetail({
 
         {/* Statistics bar */}
         <div className="space-y-2">
-          <span className="text-[10px] font-mono font-bold tracking-wider text-zinc-500">
+          <span className="section-title">
             STATISTICS
           </span>
           <div className="grid grid-cols-2 gap-2 font-mono text-xs">
-            <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 flex justify-between items-center">
+            <div className="stat-card">
               <span className="text-emerald-500 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Succeeded</span>
               </span>
               <span className="font-bold text-zinc-300">{succeeded}</span>
             </div>
-            <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 flex justify-between items-center">
+            <div className="stat-card">
               <span className="text-rose-500 flex items-center gap-1">
                 <XCircle className="w-3.5 h-3.5" />
                 <span>Failed</span>
@@ -189,7 +189,7 @@ export function CronWorkflowDetail({
                 navigate(`/workflows/${triggered.metadata.namespace}/${triggered.metadata.name}`);
               }
             }}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+            className="btn-primary flex-1"
           >
             <Play className="w-4 h-4" />
             <span>Trigger Run Now</span>
@@ -197,7 +197,7 @@ export function CronWorkflowDetail({
 
           <button
             onClick={() => onSuspendToggle(cron.metadata.namespace, cron.metadata.name, isSuspended)}
-            className="flex-1 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded-lg py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            className="btn-secondary flex-1"
           >
             {isSuspended ? (
               <>
@@ -217,7 +217,7 @@ export function CronWorkflowDetail({
         <div className="space-y-3">
           <div className="flex items-center gap-1.5">
             <History className="w-4 h-4 text-zinc-400" />
-            <span className="text-[10px] font-mono font-bold tracking-wider text-zinc-500">
+            <span className="section-title">
               RECENT TRIGGERED RUNS ({triggeredWorkflows.length})
             </span>
           </div>

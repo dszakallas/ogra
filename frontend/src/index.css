@@ -34,3 +34,91 @@
 .animate-fade-in {
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Common UI component classes */
+
+/* Card containers */
+.card {
+  @apply bg-zinc-900 border border-zinc-800 rounded-2xl;
+}
+
+.card-hover {
+  @apply bg-zinc-900 border border-zinc-800 hover:border-zinc-700/80 rounded-2xl transition-all cursor-pointer group shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)];
+}
+
+/* Detail page layout */
+.detail-page {
+  @apply flex flex-col min-h-screen pb-16 bg-zinc-950 text-white max-w-2xl mx-auto w-full border-x border-zinc-900/40;
+}
+
+/* Sticky header for detail pages */
+.detail-header {
+  @apply sticky top-0 z-20 flex items-center justify-between p-3 bg-zinc-950/90 border-b border-zinc-800/80 backdrop-blur-md;
+}
+
+/* Section headers */
+.section-title {
+  @apply text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase;
+}
+
+/* Empty state container */
+.empty-state {
+  @apply bg-zinc-900 border border-zinc-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 shadow-inner;
+}
+
+/* Not found state */
+.not-found {
+  @apply max-w-md mx-auto my-12 p-6 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-4;
+}
+
+/* Icon button */
+.icon-btn {
+  @apply p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors;
+}
+
+/* Stat card */
+.stat-card {
+  @apply bg-zinc-950 p-3 rounded-xl border border-zinc-900 flex justify-between items-center;
+}
+
+/* Tab bar */
+.tab-bar {
+  @apply flex border border-zinc-800/80 bg-zinc-900 p-1.5 rounded-2xl select-none shadow-sm;
+}
+
+.tab-item {
+  @apply flex-1 text-center py-2.5 text-[11px] font-mono font-bold rounded-xl transition-all duration-150;
+}
+
+.tab-item-active {
+  @apply bg-indigo-600 text-white font-extrabold shadow-[0_4px_12px_rgba(99,102,241,0.25)];
+}
+
+.tab-item-inactive {
+  @apply text-zinc-500 hover:text-zinc-300;
+}
+
+/* Metadata label */
+.meta-label {
+  @apply text-zinc-500 font-mono text-[10px] uppercase tracking-wider;
+}
+
+/* Metadata value */
+.meta-value {
+  @apply text-zinc-200 font-semibold font-mono;
+}
+
+/* Badge/pill */
+.badge {
+  @apply flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono border;
+}
+
+/* Primary action button */
+.btn-primary {
+  @apply bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all;
+}
+
+/* Secondary action button */
+.btn-secondary {
+  @apply flex-1 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white text-xs font-semibold py-3 rounded-xl transition-colors;
+}

@@ -105,7 +105,7 @@ export function WorkflowDetail({
       );
     }
     return (
-      <div className="max-w-md mx-auto my-12 p-6 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-4">
+      <div className="not-found">
         <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
         <div className="space-y-1">
           <h2 className="text-lg font-bold text-white">Workflow Not Found</h2>
@@ -154,14 +154,14 @@ export function WorkflowDetail({
   const workflowParams = workflow.spec?.arguments?.parameters || [];
 
   return (
-    <div className="flex flex-col min-h-screen pb-16 bg-zinc-950 text-white max-w-2xl mx-auto w-full border-x border-zinc-900/40">
+    <div className="detail-page">
       {/* Top sticky action header */}
-      <div className="sticky top-0 z-20 flex items-center justify-between p-3 bg-zinc-950/90 border-b border-zinc-800/80 backdrop-blur-md">
+      <div className="detail-header">
         <div className="flex items-center gap-2 min-w-0">
           <button
             data-testid="workflow-detail-back-btn"
             onClick={() => navigate('/resources')}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            className="icon-btn"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -169,7 +169,7 @@ export function WorkflowDetail({
             <h1 className="text-sm font-bold truncate font-mono text-zinc-200">
               {workflow.metadata.name}
             </h1>
-            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
+            <p className="meta-label">
               {workflow.metadata.namespace}
             </p>
           </div>
@@ -338,16 +338,14 @@ export function WorkflowDetail({
       </div>
 
       {/* Tab navigation bar */}
-      <div className="flex border border-zinc-800/80 bg-zinc-900 p-1.5 rounded-2xl mx-4 mb-4 select-none shadow-sm">
+      <div className="tab-bar mx-4 mb-4">
         {(['SUMMARY', 'NODES', 'TIMELINE', 'LOGS'] as TabType[]).map((tab) => (
           <button
             key={tab}
             data-testid={`tab-${tab.toLowerCase()}`}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 text-center py-2.5 text-[11px] font-mono font-bold rounded-xl transition-all duration-150 ${
-              activeTab === tab
-                ? 'bg-indigo-600 text-white font-extrabold shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
-                : 'text-zinc-500 hover:text-zinc-300'
+            className={`tab-item ${
+              activeTab === tab ? 'tab-item-active' : 'tab-item-inactive'
             }`}
           >
             {tab}
@@ -361,7 +359,7 @@ export function WorkflowDetail({
         {activeTab === 'SUMMARY' && (
           <div className="space-y-5 pb-8">
             <div className="space-y-2">
-              <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
+              <h3 className="section-title">
                 SUBMISSION PARAMETERS
               </h3>
               {workflowParams.length === 0 ? (
@@ -385,23 +383,23 @@ export function WorkflowDetail({
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
+              <h3 className="section-title">
                 NODE STATS (PODS: {podNodes.length})
               </h3>
               <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                <div className="bg-zinc-950 border border-zinc-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="stat-card shadow-sm">
                   <span className="text-emerald-500 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Succeeded</span>
                   <span className="font-bold text-zinc-300">{nodeStats.Succeeded}</span>
                 </div>
-                <div className="bg-zinc-950 border border-zinc-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="stat-card shadow-sm">
                   <span className="text-indigo-400 font-bold flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Running</span>
                   <span className="font-bold text-zinc-300">{nodeStats.Running}</span>
                 </div>
-                <div className="bg-zinc-950 border border-zinc-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="stat-card shadow-sm">
                   <span className="text-amber-500 font-bold flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Pending</span>
                   <span className="font-bold text-zinc-300">{nodeStats.Pending}</span>
                 </div>
-                <div className="bg-zinc-950 border border-zinc-900 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="stat-card shadow-sm">
                   <span className="text-rose-400 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" />Failed</span>
                   <span className="font-bold text-zinc-300">{nodeStats.Failed + nodeStats.Error}</span>
                 </div>
@@ -409,21 +407,21 @@ export function WorkflowDetail({
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
+              <h3 className="section-title">
                 METADATA DETAILS
               </h3>
                 <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-3.5 font-mono text-[11px] text-zinc-400 shadow-md select-text">
                 <div className="flex justify-between gap-4">
                   <span>UID:</span>
-                  <span className="text-zinc-200 truncate max-w-[200px] text-right font-semibold">{workflow.metadata.uid}</span>
+                  <span className="meta-value truncate max-w-[200px] text-right">{workflow.metadata.uid}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span>RESOURCE VERSION:</span>
-                  <span className="text-zinc-200 font-semibold">{workflow.metadata.resourceVersion}</span>
+                  <span className="meta-value">{workflow.metadata.resourceVersion}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span>CREATED AT:</span>
-                  <span className="text-zinc-200 font-semibold">
+                  <span className="meta-value">
                     {new Date(workflow.metadata.creationTimestamp).toLocaleString()}
                   </span>
                 </div>
@@ -447,7 +445,7 @@ export function WorkflowDetail({
         {/* NODES TAB */}
         {activeTab === 'NODES' && (
           <div className="space-y-3.5 pb-8">
-            <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
+            <h3 className="section-title">
               Execution Nodes Tree ({podNodes.length} Pods)
             </h3>
 
@@ -554,7 +552,7 @@ export function WorkflowDetail({
         {/* TIMELINE TAB */}
         {activeTab === 'TIMELINE' && (
           <div className="space-y-4 pb-8">
-            <h3 className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase">
+            <h3 className="section-title">
               Sequential Execution Timeline
             </h3>
 
