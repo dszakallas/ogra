@@ -7,12 +7,14 @@ import {
   History,
   BookOpen,
   X,
-  Check
+  Check,
+  Star
 } from 'lucide-react';
 import { WorkflowTemplate, Workflow } from '../types';
 import { PhaseBadge } from '../components/PhaseBadge';
 import { ParameterInput } from '../components/ParameterInput';
 import { getRelativeTime, getDuration } from '../utils/time';
+import { useCluster } from '../context/ClusterContext';
 
 interface WorkflowTemplateDetailProps {
   templates: WorkflowTemplate[];
@@ -27,12 +29,15 @@ export function WorkflowTemplateDetail({
 }: WorkflowTemplateDetailProps) {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
   const navigate = useNavigate();
+  const { toggleFavorite, isFavorite } = useCluster();
   const [showTriggerModal, setShowTriggerModal] = useState(false);
   const [formParams, setFormParams] = useState<Record<string, string>>({});
 
   const template = templates.find(
     (t) => t.metadata.namespace === namespace && t.metadata.name === name
   );
+
+  const favorited = template ? isFavorite('WorkflowTemplate', template.metadata.namespace, template.metadata.name) : false;
 
   if (!template) {
     return (
@@ -89,6 +94,19 @@ export function WorkflowTemplateDetail({
           <BookOpen className="w-3 h-3" />
           TEMPLATE
         </span>
+        {template && (
+          <button
+            onClick={() => toggleFavorite('WorkflowTemplate', template.metadata.namespace, template.metadata.name)}
+            className={`p-1.5 rounded-lg transition-all ${
+              favorited
+                ? 'text-amber-400 bg-amber-950/30 border border-amber-900/40'
+                : 'text-gray-500 hover:text-gray-300 border border-transparent hover:border-gray-800'
+            }`}
+            title={favorited ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Star className="w-4 h-4" fill={favorited ? 'currentColor' : 'none'} />
+          </button>
+        )}
       </div>
 
       <div className="p-4 space-y-4">

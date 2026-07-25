@@ -10,12 +10,14 @@ import {
   XCircle,
   ToggleLeft,
   ToggleRight,
-  Calendar
+  Calendar,
+  Star
 } from 'lucide-react';
 import { CronWorkflow, Workflow } from '../types';
 import cronstrue from 'cronstrue';
 import { getRelativeTime, getDuration } from '../utils/time';
 import { PhaseBadge } from '../components/PhaseBadge';
+import { useCluster } from '../context/ClusterContext';
 
 interface CronWorkflowDetailProps {
   cronWorkflows: CronWorkflow[];
@@ -32,11 +34,14 @@ export function CronWorkflowDetail({
 }: CronWorkflowDetailProps) {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
   const navigate = useNavigate();
+  const { toggleFavorite, isFavorite } = useCluster();
 
   // Find the selected CronWorkflow
   const cron = cronWorkflows.find(
     (c) => c.metadata.namespace === namespace && c.metadata.name === name
   );
+
+  const favorited = cron ? isFavorite('CronWorkflow', cron.metadata.namespace, cron.metadata.name) : false;
 
   if (!cron) {
     return (
@@ -113,6 +118,19 @@ export function CronWorkflowDetail({
             <Calendar className="w-3 h-3" />
             CRON
           </span>
+          {cron && (
+            <button
+              onClick={() => toggleFavorite('CronWorkflow', cron.metadata.namespace, cron.metadata.name)}
+              className={`p-1.5 rounded-lg transition-all ${
+                favorited
+                  ? 'text-amber-400 bg-amber-950/30 border border-amber-900/40'
+                  : 'text-gray-500 hover:text-gray-300 border border-transparent hover:border-gray-800'
+              }`}
+              title={favorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Star className="w-4 h-4" fill={favorited ? 'currentColor' : 'none'} />
+            </button>
+          )}
         </div>
       </div>
 

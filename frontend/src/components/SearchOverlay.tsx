@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Layers, BookOpen, Calendar, XCircle } from 'lucide-react';
+import { Search, X, Layers, BookOpen, Calendar, XCircle, Star } from 'lucide-react';
 import { useCluster } from '../context/ClusterContext';
 
 interface SearchOverlayProps {
@@ -97,7 +97,7 @@ function parseCompletion(input: string): { mode: CompletionMode; prefix: string;
 
 export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const navigate = useNavigate();
-  const { workflows, templates, cronWorkflows, namespaces } = useCluster();
+  const { workflows, templates, cronWorkflows, namespaces, isFavorite } = useCluster();
   const [input, setInput] = useState('');
   const [chips, setChips] = useState<Chip[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -166,7 +166,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     const isWildcard = query === '*' || query === '**';
     if (query.length < 2 && !isWildcard) return [];
 
-    return allResources.filter((r) => {
+    const filtered = allResources.filter((r) => {
       if (kindFilter && r.kind !== kindFilter) return false;
       if (nsFilter && r.namespace !== nsFilter) return false;
       if (!isWildcard) {
@@ -174,8 +174,17 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
         if (!r.name.toLowerCase().includes(q) && !`${r.namespace}/${r.name}`.toLowerCase().includes(q)) return false;
       }
       return true;
+    });
+
+    // Sort favorites first
+    return filtered.sort((a, b) => {
+      const aFav = isFavorite(a.kind, a.namespace, a.name);
+      const bFav = isFavorite(b.kind, b.namespace, b.name);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return 0;
     }).slice(0, 30);
-  }, [searchPart, kindFilter, nsFilter, allResources]);
+  }, [searchPart, kindFilter, nsFilter, allResources, isFavorite]);
 
   const handleNavigate = useCallback((kind: SearchKind, namespace: string, name: string) => {
     addRecent(kind, namespace, name);
@@ -330,24 +339,30 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
               No results found
             </div>
           ) : !showSuggestions && showResults ? (
-            results.map((r, i) => (
-              <button
-                key={`${r.kind}/${r.namespace}/${r.name}-${i}`}
-                data-testid="search-result"
-                onClick={() => handleNavigate(r.kind, r.namespace, r.name)}
-                className="w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-zinc-900/60 transition-colors border-b border-zinc-800/30 last:border-0"
-              >
-                {getKindIcon(r.kind)}
-                <div className="min-w-0 flex-1">
-                  <span className="text-xs font-bold text-zinc-200 font-mono block truncate">
-                    {r.namespace}/{r.name}
-                  </span>
-                </div>
-                {r.phase && (
-                  <span className="shrink-0 text-[9px] font-mono text-zinc-500 uppercase">{r.phase}</span>
-                )}
-              </button>
-            ))
+            results.map((r, i) => {
+              const favorited = isFavorite(r.kind, r.namespace, r.name);
+              return (
+                <button
+                  key={`${r.kind}/${r.namespace}/${r.name}-${i}`}
+                  data-testid="search-result"
+                  onClick={() => handleNavigate(r.kind, r.namespace, r.name)}
+                  className="w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-zinc-900/60 transition-colors border-b border-zinc-800/30 last:border-0"
+                >
+                  {getKindIcon(r.kind)}
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-zinc-200 font-mono block truncate">
+                      {r.namespace}/{r.name}
+                    </span>
+                  </div>
+                  {favorited && (
+                    <Star className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" />
+                  )}
+                  {r.phase && (
+                    <span className="shrink-0 text-[9px] font-mono text-zinc-500 uppercase">{r.phase}</span>
+                  )}
+                </button>
+              );
+            })
           ) : null}
         </div>
 

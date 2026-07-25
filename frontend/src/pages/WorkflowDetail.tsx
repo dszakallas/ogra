@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Copy,
   Layers,
-  CheckCircle2
+  CheckCircle2,
+  Star
 } from 'lucide-react';
 import { useCluster } from '../context/ClusterContext';
 import { Workflow } from '../types';
@@ -49,7 +50,7 @@ export function WorkflowDetail({
 }: WorkflowDetailProps) {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
   const navigate = useNavigate();
-  const { addToast } = useCluster();
+  const { addToast, toggleFavorite, isFavorite } = useCluster();
 
   const [activeTab, setActiveTab] = useState<TabType>('SUMMARY');
   const [selectedPodId, setSelectedPodId] = useState<string>('');
@@ -64,6 +65,8 @@ export function WorkflowDetail({
     (wf) => wf.metadata.namespace === namespace && wf.metadata.name === name
   );
   const workflow = workflowFromList || directFetchedWf;
+
+  const favorited = workflow ? isFavorite('Workflow', workflow.metadata.namespace, workflow.metadata.name) : false;
 
   // Direct fetch fallback if workflow is not yet in live state
   useEffect(() => {
@@ -177,6 +180,20 @@ export function WorkflowDetail({
             <Layers className="w-3 h-3" />
             WORKFLOW
           </span>
+
+          {workflow && (
+            <button
+              onClick={() => toggleFavorite('Workflow', workflow.metadata.namespace, workflow.metadata.name)}
+              className={`p-1.5 rounded-lg transition-all ${
+                favorited
+                  ? 'text-amber-400 bg-amber-950/30 border border-amber-900/40'
+                  : 'text-gray-500 hover:text-gray-300 border border-transparent hover:border-gray-800'
+              }`}
+              title={favorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Star className="w-4 h-4" fill={favorited ? 'currentColor' : 'none'} />
+            </button>
+          )}
 
           <div className="relative">
             <button
