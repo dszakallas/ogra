@@ -197,7 +197,7 @@ export function CronWorkflowDetail({
 
           <button
             onClick={() => onSuspendToggle(cron.metadata.namespace, cron.metadata.name, isSuspended)}
-            className="btn-secondary flex-1"
+            className="btn-secondary"
           >
             {isSuspended ? (
               <>
