@@ -8,6 +8,7 @@ frontend/playwright-report/
 frontend/blob-report/
 frontend/playwright/.cache/
 .playwright/
+test-results
 
 # Go / Binary Outputs
 /server
@@ -26,6 +27,7 @@ frontend/playwright/.cache/
 .mcp.json
 .pre-commit-config.yaml
 opencode.json
+result
 
 # Logs & Backups
 *.log

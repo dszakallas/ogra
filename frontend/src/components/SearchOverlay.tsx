@@ -197,6 +197,18 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     setChips((prev) => prev.filter((c) => c.type !== type));
   }, []);
 
+  const filteredRecent = useMemo(() => {
+    return recent.filter((r) => {
+      if (kindFilter && r.kind !== kindFilter) return false;
+      if (nsFilter && r.namespace !== nsFilter) return false;
+      if (searchPart && searchPart !== '*' && searchPart !== '**') {
+        const q = searchPart.toLowerCase();
+        if (!r.name.toLowerCase().includes(q) && !`${r.namespace}/${r.name}`.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [recent, kindFilter, nsFilter, searchPart]);
+
   if (!open) return null;
 
   const hasChips = chips.length > 0;
@@ -310,7 +322,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
         <div className="max-h-80 overflow-y-auto scrollbar-none">
           {showEmptyState ? (
-            recent.length === 0 ? (
+            filteredRecent.length === 0 ? (
               <div className="p-6 text-center text-xs text-zinc-500 font-mono">
                 Start typing to search across all resources
               </div>
@@ -319,7 +331,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                 <div className="px-3 pt-2 pb-1">
                   <span className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-wider">Recent</span>
                 </div>
-                {recent.map((r, i) => (
+                {filteredRecent.map((r, i) => (
                   <button
                     key={`${r.kind}/${r.namespace}/${r.name}-${i}`}
                     data-testid="search-recent-item"

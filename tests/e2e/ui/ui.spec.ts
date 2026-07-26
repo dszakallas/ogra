@@ -255,6 +255,56 @@ test.describe('OGRA UI End-to-End Test Suite', () => {
     await expect(page.getByRole('heading', { name: 'bash-simulation-template', exact: true }).first()).toBeVisible();
   });
 
+  test('search: recent items are filtered by kind chip', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTitle('Refresh current data').click();
+    await page.waitForTimeout(1000);
+
+    // Open search and navigate to a resource to create a recent entry
+    await page.getByTestId('search-btn').click();
+    await page.getByTestId('global-search-input').fill('bash-simulation-template');
+    await page.waitForTimeout(500);
+    await page.getByTestId('search-result').first().click();
+    await page.waitForTimeout(1000);
+
+    // Open search again - recent should show
+    await page.getByTestId('search-btn').click();
+    await expect(page.getByTestId('search-recent-item')).toBeVisible();
+
+    // Add kind filter for CronWorkflow - recent should disappear (bash-simulation-template is a WorkflowTemplate)
+    await page.getByTestId('global-search-input').fill('kind:CronWorkflow');
+    await page.getByTestId('suggestion-kind-CronWorkflow').click();
+    await expect(page.getByTestId('chip-kind')).toBeVisible();
+    await expect(page.getByTestId('search-recent-item')).not.toBeVisible();
+
+    await page.keyboard.press('Escape');
+  });
+
+  test('search: recent items are filtered by ns chip', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTitle('Refresh current data').click();
+    await page.waitForTimeout(1000);
+
+    // Open search and navigate to a resource to create a recent entry
+    await page.getByTestId('search-btn').click();
+    await page.getByTestId('global-search-input').fill('bash-simulation-template');
+    await page.waitForTimeout(500);
+    await page.getByTestId('search-result').first().click();
+    await page.waitForTimeout(1000);
+
+    // Open search again - recent should show
+    await page.getByTestId('search-btn').click();
+    await expect(page.getByTestId('search-recent-item')).toBeVisible();
+
+    // Add ns filter for a different namespace - recent should disappear
+    await page.getByTestId('global-search-input').fill('ns:kube-system');
+    await page.getByTestId('suggestion-ns-kube-system').click();
+    await expect(page.getByTestId('chip-ns')).toBeVisible();
+    await expect(page.getByTestId('search-recent-item')).not.toBeVisible();
+
+    await page.keyboard.press('Escape');
+  });
+
   test('resources: filters by ns query param', async ({ page }) => {
     await page.goto(`/#/resources?ns=${env.namespace}`);
     await page.getByTitle('Refresh current data').click();
