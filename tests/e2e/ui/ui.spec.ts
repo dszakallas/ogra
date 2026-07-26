@@ -36,6 +36,46 @@ test.describe('OGRA UI End-to-End Test Suite', () => {
     await expect(page.getByRole('button', { name: /^Cron Workflows/ })).toBeVisible();
   });
 
+  test('dashboard: kind cards filter resources by kind', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTitle('Refresh current data').click();
+    await page.waitForTimeout(1000);
+
+    // Click Workflows card - should filter to workflows only
+    await page.getByRole('button', { name: /^Workflows/ }).click();
+    await expect(page.getByRole('heading', { name: 'Resources' })).toBeVisible();
+    await expect(page.url()).toContain('kind=Workflow');
+
+    // Verify only workflows are shown (templates should not appear)
+    const headings = page.getByRole('heading', { level: 2 });
+    const firstHeadingText = await headings.first().textContent();
+    // Workflow names from fixtures end with random suffix, but templates don't
+    // The key assertion: no template names should appear when filtered to Workflow
+    await expect(page.getByRole('heading', { name: 'bash-simulation-template', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'python-data-pipeline', exact: true })).toHaveCount(0);
+
+    // Navigate back and click Workflow Templates card
+    await page.goto('/');
+    await page.getByTitle('Refresh current data').click();
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: /^Workflow Templates/ }).click();
+    await expect(page.url()).toContain('kind=WorkflowTemplate');
+
+    // Verify templates are shown
+    await expect(page.getByRole('heading', { name: 'bash-simulation-template', exact: true }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'python-data-pipeline', exact: true }).first()).toBeVisible();
+
+    // Navigate back and click Cron Workflows card
+    await page.goto('/');
+    await page.getByTitle('Refresh current data').click();
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: /^Cron Workflows/ }).click();
+    await expect(page.url()).toContain('kind=CronWorkflow');
+
+    // Verify cron workflow is shown
+    await expect(page.getByRole('heading', { name: 'periodic-backup-job', exact: true }).first()).toBeVisible();
+  });
+
   test('resources: unified list shows all resource kinds', async ({ page }) => {
     await page.goto('/');
     await page.getByTitle('Refresh current data').click();

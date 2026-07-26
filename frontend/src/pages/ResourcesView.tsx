@@ -18,13 +18,20 @@ export function ResourcesView() {
   const [searchParams] = useSearchParams();
 
   const initialTab = searchParams.get('tab') as SubTab | null;
+  const kindFilter = searchParams.get('kind') as 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow' | null;
   const [activeTab, setActiveTab] = useState<SubTab>(initialTab === 'favorites' || initialTab === 'events' ? initialTab : 'resources');
 
-  const allResources: UnifiedResource[] = useMemo(() => [
-    ...workflows.map((w) => ({ kind: 'Workflow' as const, resource: w })),
-    ...templates.map((t) => ({ kind: 'WorkflowTemplate' as const, resource: t })),
-    ...cronWorkflows.map((c) => ({ kind: 'CronWorkflow' as const, resource: c }))
-  ], [workflows, templates, cronWorkflows]);
+  const allResources: UnifiedResource[] = useMemo(() => {
+    const resources = [
+      ...workflows.map((w) => ({ kind: 'Workflow' as const, resource: w })),
+      ...templates.map((t) => ({ kind: 'WorkflowTemplate' as const, resource: t })),
+      ...cronWorkflows.map((c) => ({ kind: 'CronWorkflow' as const, resource: c }))
+    ];
+    if (kindFilter) {
+      return resources.filter((r) => r.kind === kindFilter);
+    }
+    return resources;
+  }, [workflows, templates, cronWorkflows, kindFilter]);
 
   const favoritedResources = useMemo(() => {
     return allResources.filter(({ kind, resource }) => {
