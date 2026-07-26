@@ -19,6 +19,8 @@ export function ResourcesView() {
 
   const initialTab = searchParams.get('tab') as SubTab | null;
   const kindFilter = searchParams.get('kind') as 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow' | null;
+  const nsFilter = searchParams.get('ns') || null;
+  const queryFilter = searchParams.get('q') || null;
   const [activeTab, setActiveTab] = useState<SubTab>(initialTab === 'favorites' || initialTab === 'events' ? initialTab : 'resources');
 
   const allResources: UnifiedResource[] = useMemo(() => {
@@ -27,11 +29,19 @@ export function ResourcesView() {
       ...templates.map((t) => ({ kind: 'WorkflowTemplate' as const, resource: t })),
       ...cronWorkflows.map((c) => ({ kind: 'CronWorkflow' as const, resource: c }))
     ];
-    if (kindFilter) {
-      return resources.filter((r) => r.kind === kindFilter);
-    }
-    return resources;
-  }, [workflows, templates, cronWorkflows, kindFilter]);
+
+    return resources.filter((r) => {
+      if (kindFilter && r.kind !== kindFilter) return false;
+      if (nsFilter && r.resource.metadata.namespace !== nsFilter) return false;
+      if (queryFilter) {
+        const q = queryFilter.toLowerCase();
+        const name = r.resource.metadata.name.toLowerCase();
+        const ns = r.resource.metadata.namespace.toLowerCase();
+        if (!name.includes(q) && !ns.includes(q) && !`${ns}/${name}`.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [workflows, templates, cronWorkflows, kindFilter, nsFilter, queryFilter]);
 
   const favoritedResources = useMemo(() => {
     return allResources.filter(({ kind, resource }) => {

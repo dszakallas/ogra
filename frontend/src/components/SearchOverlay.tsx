@@ -370,6 +370,25 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           <span>Search across all resources</span>
           <span>ESC to close</span>
         </div>
+
+        {showResults && results.length > 0 && (
+          <div className="p-3 border-t border-zinc-800/60">
+            <button
+              data-testid="show-results-btn"
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (kindFilter) params.set('kind', kindFilter);
+                if (nsFilter) params.set('ns', nsFilter);
+                if (searchPart && searchPart !== '*' && searchPart !== '**') params.set('q', searchPart);
+                navigate(`/resources?${params.toString()}`);
+                onClose();
+              }}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+            >
+              Show results ({results.length})
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
