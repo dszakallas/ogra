@@ -119,6 +119,9 @@ func main() {
 	})
 
 	// SSE Stream Router
+	mux.HandleFunc("GET /api/v1/events/{namespace}", func(w http.ResponseWriter, r *http.Request) {
+		eventsH.StreamEvents(w, r, r.PathValue("namespace"))
+	})
 	mux.HandleFunc("GET /api/v1/workflow-events/{namespace}", func(w http.ResponseWriter, r *http.Request) {
 		eventsH.StreamWorkflowEvents(w, r, r.PathValue("namespace"))
 	})

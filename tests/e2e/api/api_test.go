@@ -125,6 +125,32 @@ func TestWorkflowEventsSSEStream(t *testing.T) {
 	require.True(t, received, "SSE stream should receive ADDED event for submitted workflow")
 }
 
+func TestMultiResourceEventsSSEStream(t *testing.T) {
+	env := setupAPIEnv(t, "multi-events")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	sseChan := env.streamSSE(ctx, "/api/v1/events/"+env.namespace)
+
+	submitPayload := map[string]any{
+		"resourceKind": "WorkflowTemplate",
+		"resourceName": "bash-simulation-template",
+	}
+	code, _ := env.doRequest("POST", "/api/v1/workflows/"+env.namespace+"/submit", submitPayload)
+	require.Equal(t, 201, code)
+
+	var received bool
+	for line := range sseChan {
+		if strings.Contains(line, "ADDED") && strings.Contains(line, "bash-simulation-template-") {
+			received = true
+			cancel()
+			break
+		}
+	}
+	require.True(t, received, "SSE stream /api/v1/events should receive ADDED event for submitted workflow")
+}
+
 func TestWorkflowLogStreaming(t *testing.T) {
 	env := setupAPIEnv(t, "logs")
 

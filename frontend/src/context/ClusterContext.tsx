@@ -5,7 +5,7 @@ import { ToastContainer, ToastMessage } from '../components/Toast';
 
 export interface ResourceEvent {
   type: 'ADDED' | 'MODIFIED' | 'DELETED';
-  kind: 'Workflow';
+  kind: 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow';
   name: string;
   namespace: string;
   phase?: string;
@@ -28,6 +28,46 @@ function loadFavorites(): Set<FavoriteKey> {
 
 function saveFavorites(favs: Set<FavoriteKey>) {
   localStorage.setItem('ogra-favorites', JSON.stringify([...favs]));
+}
+
+export interface IdentifiableResource {
+  metadata: {
+    uid?: string;
+    name: string;
+    namespace?: string;
+  };
+}
+
+function isSameResource<T extends IdentifiableResource>(a: T, b: T): boolean {
+  if (a.metadata.uid && b.metadata.uid && a.metadata.uid === b.metadata.uid) {
+    return true;
+  }
+  const aNs = a.metadata.namespace || '';
+  const bNs = b.metadata.namespace || '';
+  return aNs === bNs && a.metadata.name === b.metadata.name;
+}
+
+function upsertResource<T extends IdentifiableResource>(list: T[], newItem: T): T[] {
+  const index = list.findIndex((item) => isSameResource(item, newItem));
+  if (index !== -1) {
+    const copy = [...list];
+    copy[index] = newItem;
+    return copy;
+  }
+  return [newItem, ...list];
+}
+
+function deduplicateResources<T extends IdentifiableResource>(items: T[]): T[] {
+  const result: T[] = [];
+  for (const item of items) {
+    const index = result.findIndex((existing) => isSameResource(existing, item));
+    if (index === -1) {
+      result.push(item);
+    } else {
+      result[index] = item;
+    }
+  }
+  return result;
 }
 
 interface ClusterContextType {
@@ -120,9 +160,9 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
         apiFetch<ServerInfo>('/api/v1/info')
       ]);
 
-      setWorkflows(wfData.items || []);
-      setTemplates(tmplData.items || []);
-      setCronWorkflows(cronData.items || []);
+      setWorkflows(deduplicateResources(wfData.items || []));
+      setTemplates(deduplicateResources(tmplData.items || []));
+      setCronWorkflows(deduplicateResources(cronData.items || []));
       setUserInfo(userData);
       setServerInfo(infoData);
       
@@ -139,7 +179,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchData();
 
-    const url = '/api/v1/workflow-events/_';
+    const url = '/api/v1/events/_';
     const eventSource = new EventSource(url);
     eventSourceRef.current = eventSource;
 
@@ -150,37 +190,50 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        const { type, object } = data;
+        const { type, kind: rawKind, object } = data;
         
         if (!object) return;
 
+        const kind: 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow' =
+          (rawKind || object.kind || 'Workflow') as any;
+
         setEventHistory((prev) => [{
           type,
-          kind: 'Workflow' as const,
+          kind,
           name: object.metadata?.name || '',
           namespace: object.metadata?.namespace || '',
-          phase: object.status?.phase,
+          phase: object.status?.phase || object.status?.conditions?.[0]?.type,
           timestamp: new Date().toISOString()
         }, ...prev].slice(0, 200));
 
-        setWorkflows((prev) => {
-          const index = prev.findIndex((w) => w.metadata.uid === object.metadata.uid);
-          
-          if (type === 'ADDED') {
-            if (index === -1) return [object, ...prev];
-            return prev;
-          } else if (type === 'MODIFIED') {
-            if (index !== -1) {
-              const copy = [...prev];
-              copy[index] = object;
-              return copy;
+        if (kind === 'Workflow') {
+          setWorkflows((prev) => {
+            if (type === 'ADDED' || type === 'MODIFIED') {
+              return upsertResource(prev, object);
+            } else if (type === 'DELETED') {
+              return prev.filter((w) => !isSameResource(w, object));
             }
-            return [object, ...prev];
-          } else if (type === 'DELETED') {
-            return prev.filter((w) => w.metadata.uid !== object.metadata.uid);
-          }
-          return prev;
-        });
+            return prev;
+          });
+        } else if (kind === 'WorkflowTemplate') {
+          setTemplates((prev) => {
+            if (type === 'ADDED' || type === 'MODIFIED') {
+              return upsertResource(prev, object);
+            } else if (type === 'DELETED') {
+              return prev.filter((t) => !isSameResource(t, object));
+            }
+            return prev;
+          });
+        } else if (kind === 'CronWorkflow') {
+          setCronWorkflows((prev) => {
+            if (type === 'ADDED' || type === 'MODIFIED') {
+              return upsertResource(prev, object);
+            } else if (type === 'DELETED') {
+              return prev.filter((c) => !isSameResource(c, object));
+            }
+            return prev;
+          });
+        }
       } catch (err) {
         console.error('Error parsing SSE event:', err);
       }
@@ -213,7 +266,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(payload)
       });
 
-      setWorkflows((prev) => [result, ...prev]);
+      setWorkflows((prev) => upsertResource(prev, result));
       addToast(`Workflow ${result.metadata.name} launched successfully`, 'success');
       return result;
     } catch (err: any) {
@@ -227,7 +280,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
       const updated = await apiFetch<Workflow>(`/api/v1/workflows/${namespace}/${name}/${action}`, {
         method: 'PUT'
       });
-      setWorkflows((prev) => prev.map((w) => (w.metadata.uid === updated.metadata.uid ? updated : w)));
+      setWorkflows((prev) => prev.map((w) => (isSameResource(w, updated) ? updated : w)));
       addToast(successMsg, 'success');
     } catch (err: any) {
       addToast(err.message || `Failed to ${action} workflow`, 'error');
@@ -252,7 +305,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
   const handleDeleteWorkflow = async (namespace: string, name: string) => {
     try {
       await apiFetch(`/api/v1/workflows/${namespace}/${name}`, { method: 'DELETE' });
-      setWorkflows((prev) => prev.filter((w) => !(w.metadata.namespace === namespace && w.metadata.name === name)));
+      setWorkflows((prev) => prev.filter((w) => !((w.metadata.namespace || '') === namespace && w.metadata.name === name)));
       addToast(`Workflow ${name} deleted`, 'info');
     } catch (err: any) {
       addToast(err.message || 'Failed to delete workflow', 'error');
@@ -264,7 +317,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
       const triggered = await apiFetch<Workflow>(`/api/v1/cron-workflows/${namespace}/${name}/trigger`, {
         method: 'POST'
       });
-      setWorkflows((prev) => [triggered, ...prev]);
+      setWorkflows((prev) => upsertResource(prev, triggered));
       addToast(`Cron workflow ${name} manually triggered`, 'success');
       return triggered;
     } catch (err: any) {
@@ -278,7 +331,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
       const updated = await apiFetch<CronWorkflow>(`/api/v1/cron-workflows/${namespace}/${name}/${action}`, {
         method: 'PUT'
       });
-      setCronWorkflows((prev) => prev.map((cw) => (cw.metadata.uid === updated.metadata.uid ? updated : cw)));
+      setCronWorkflows((prev) => prev.map((cw) => (isSameResource(cw, updated) ? updated : cw)));
       addToast(`Cron schedule ${name} ${isCurrentlySuspended ? 'resumed' : 'suspended'}`, 'info');
     } catch (err: any) {
       addToast(err.message || `Failed to ${action} cron workflow`, 'error');

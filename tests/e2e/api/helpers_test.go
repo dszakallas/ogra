@@ -185,6 +185,11 @@ func buildMux(clients *config.KubeClients) *http.ServeMux {
 		http.NotFound(w, r)
 	})
 
+	mux.HandleFunc("/api/v1/events/", func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/api/v1/events/")
+		eventsH.StreamEvents(w, r, path)
+	})
+
 	mux.HandleFunc("/api/v1/workflow-events/", func(w http.ResponseWriter, r *http.Request) {
 		path := strings.TrimPrefix(r.URL.Path, "/api/v1/workflow-events/")
 		eventsH.StreamWorkflowEvents(w, r, path)

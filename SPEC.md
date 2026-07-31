@@ -76,6 +76,26 @@ flowchart TD
 - **Log Terminal**: Stream viewer with live auto-scroll, pause/resume, search filtering, line wrapping, line-level copy,
   and log file export.
 
+### 3.3 Server-Sent Events (SSE) & Real-Time Synchronization
+
+- **Unified Events Endpoint**: `GET /api/v1/events/{namespace}` streams real-time Kubernetes watch events
+  for all primary Argo resources (`Workflow`, `WorkflowTemplate`, and `CronWorkflow`).
+- **Multi-Resource & Multi-Namespace Watch**: The backend watches Kubernetes resources across all configured
+  managed namespaces concurrently, multiplexing watch streams into a single SSE HTTP response channel.
+- **Event Payload Schema**: SSE messages forward structured Kubernetes watch events:
+
+  ```json
+  {
+    "type": "ADDED" | "MODIFIED" | "DELETED" | "ERROR",
+    "kind": "Workflow" | "WorkflowTemplate" | "CronWorkflow",
+    "object": { ...unstructured Kubernetes resource... }
+  }
+  ```
+
+- **Client-Side Interpretation & Deduplication**: The React frontend (`ClusterContext`) inspects event `kind`
+  and updates state in real time via an atomic `upsertResource` matcher (keyed by `metadata.uid` or
+  `(namespace, name)`), preventing double-reporting during state transitions.
+
 ---
 
 ## 4. Quality Assurance & E2E Testing
