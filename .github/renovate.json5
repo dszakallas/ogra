@@ -11,6 +11,9 @@
   timezone: "Europe/Prague",
   labels: ["dep", "autofix"],
 
+  nix: {
+    enabled: true,
+  },
   npm: {
     enabled: true,
     fileMatch: ["(^|/)package\\.json$"],
@@ -19,6 +22,21 @@
     enabled: true,
   },
   packageRules: [
+    {
+      description: ["Auto-merge patch updates"],
+      automerge: true,
+      matchUpdateTypes: ["patch"],
+      addLabels: ["automerge"],
+    },
+    {
+      description: ["Auto-merge GitHub Actions for minor and patch"],
+      matchManagers: ["github-actions"],
+      matchDatasources: ["github-tags"],
+      automerge: true,
+      automergeType: "branch",
+      matchUpdateTypes: ["minor", "patch"],
+      addLabels: ["automerge"],
+    },
     {
       matchManagers: ["gomod"],
       semanticCommitScope: "deps",
@@ -29,5 +47,11 @@
       semanticCommitScope: "deps",
       addLabels: ["dep/source:npm"],
     },
+    {
+      matchManagers: ["nix"],
+      semanticCommitScope: "nix",
+      addLabels: ["dep/source:nix"],
+    },
   ],
 }
+
