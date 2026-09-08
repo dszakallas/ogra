@@ -176,6 +176,8 @@
     before = [ "devenv:enterShell" ];
   };
 
+  tasks."devenv:git-hooks:run".after = [ "frontend:install" ];
+
   tasks."api-test:run" = {
     exec = ''
       api-test -p "${toString config.processes.backend.ports.http.value}"
