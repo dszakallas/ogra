@@ -1,21 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { Workflow, WorkflowTemplate, CronWorkflow, UserInfo, ServerInfo } from '../types';
+import { Workflow, WorkflowTemplate, ClusterWorkflowTemplate, CronWorkflow, UserInfo, ServerInfo } from '../types';
 import { apiFetch } from '../utils/api';
 import { ToastContainer, ToastMessage } from '../components/Toast';
 
 export interface ResourceEvent {
   type: 'ADDED' | 'MODIFIED' | 'DELETED';
-  kind: 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow';
+  kind: 'Workflow' | 'WorkflowTemplate' | 'ClusterWorkflowTemplate' | 'CronWorkflow';
   name: string;
-  namespace: string;
+  namespace?: string;
   phase?: string;
   timestamp: string;
 }
 
 export type FavoriteKey = string;
 
-function makeFavoriteKey(kind: string, namespace: string, name: string): FavoriteKey {
-  return `${kind}/${namespace}/${name}`;
+function makeFavoriteKey(kind: string, namespace: string | undefined, name: string): FavoriteKey {
+  return `${kind}/${namespace || '_'}/${name}`;
 }
 
 function loadFavorites(): Set<FavoriteKey> {
@@ -73,6 +73,7 @@ function deduplicateResources<T extends IdentifiableResource>(items: T[]): T[] {
 interface ClusterContextType {
   workflows: Workflow[];
   templates: WorkflowTemplate[];
+  clusterTemplates: ClusterWorkflowTemplate[];
   cronWorkflows: CronWorkflow[];
   selectedNamespace: string;
   setSelectedNamespace: (ns: string) => void;
@@ -87,13 +88,13 @@ interface ClusterContextType {
   dismissToast: (id: string) => void;
 
   favorites: Set<FavoriteKey>;
-  toggleFavorite: (kind: string, namespace: string, name: string) => void;
-  isFavorite: (kind: string, namespace: string, name: string) => boolean;
+  toggleFavorite: (kind: string, namespace: string | undefined, name: string) => void;
+  isFavorite: (kind: string, namespace: string | undefined, name: string) => boolean;
 
   eventHistory: ResourceEvent[];
 
   // Actions
-  handleWorkflowSubmit: (namespace: string, templateName: string, params: Record<string, string>) => Promise<Workflow>;
+  handleWorkflowSubmit: (namespace: string, templateName: string, params: Record<string, string>, isClusterScope?: boolean) => Promise<Workflow>;
   handleSuspendWorkflow: (namespace: string, name: string) => Promise<void>;
   handleResumeWorkflow: (namespace: string, name: string) => Promise<void>;
   handleStopWorkflow: (namespace: string, name: string) => Promise<void>;
@@ -109,6 +110,7 @@ const ClusterContext = createContext<ClusterContextType | undefined>(undefined);
 export function ClusterProvider({ children }: { children: ReactNode }) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [templates, setTemplates] = useState<WorkflowTemplate[]>([]);
+  const [clusterTemplates, setClusterTemplates] = useState<ClusterWorkflowTemplate[]>([]);
   const [cronWorkflows, setCronWorkflows] = useState<CronWorkflow[]>([]);
   
   const [selectedNamespace, setSelectedNamespace] = useState<string>('all');
@@ -134,7 +136,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const toggleFavorite = useCallback((kind: string, namespace: string, name: string) => {
+  const toggleFavorite = useCallback((kind: string, namespace: string | undefined, name: string) => {
     setFavorites((prev) => {
       const key = makeFavoriteKey(kind, namespace, name);
       const next = new Set(prev);
@@ -145,16 +147,17 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const isFavorite = useCallback((kind: string, namespace: string, name: string) => {
+  const isFavorite = useCallback((kind: string, namespace: string | undefined, name: string) => {
     return favorites.has(makeFavoriteKey(kind, namespace, name));
   }, [favorites]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [wfData, tmplData, cronData, userData, infoData] = await Promise.all([
+      const [wfData, tmplData, cwtData, cronData, userData, infoData] = await Promise.all([
         apiFetch<{ items: Workflow[] }>('/api/v1/workflows/all'),
         apiFetch<{ items: WorkflowTemplate[] }>('/api/v1/workflow-templates/_'),
+        apiFetch<{ items: ClusterWorkflowTemplate[] }>('/api/v1/cluster-workflow-templates'),
         apiFetch<{ items: CronWorkflow[] }>('/api/v1/cron-workflows/_'),
         apiFetch<UserInfo>('/api/v1/userinfo'),
         apiFetch<ServerInfo>('/api/v1/info')
@@ -162,6 +165,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
 
       setWorkflows(deduplicateResources(wfData.items || []));
       setTemplates(deduplicateResources(tmplData.items || []));
+      setClusterTemplates(deduplicateResources(cwtData.items || []));
       setCronWorkflows(deduplicateResources(cronData.items || []));
       setUserInfo(userData);
       setServerInfo(infoData);
@@ -194,7 +198,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
         
         if (!object) return;
 
-        const kind: 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow' =
+        const kind: 'Workflow' | 'WorkflowTemplate' | 'ClusterWorkflowTemplate' | 'CronWorkflow' =
           (rawKind || object.kind || 'Workflow') as any;
 
         setEventHistory((prev) => [{
@@ -217,6 +221,15 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
           });
         } else if (kind === 'WorkflowTemplate') {
           setTemplates((prev) => {
+            if (type === 'ADDED' || type === 'MODIFIED') {
+              return upsertResource(prev, object);
+            } else if (type === 'DELETED') {
+              return prev.filter((t) => !isSameResource(t, object));
+            }
+            return prev;
+          });
+        } else if (kind === 'ClusterWorkflowTemplate') {
+          setClusterTemplates((prev) => {
             if (type === 'ADDED' || type === 'MODIFIED') {
               return upsertResource(prev, object);
             } else if (type === 'DELETED') {
@@ -251,11 +264,16 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Action implementations with clean Toast error reporting
-  const handleWorkflowSubmit = async (namespace: string, templateName: string, params: Record<string, string>) => {
+  const handleWorkflowSubmit = async (
+    namespace: string,
+    templateName: string,
+    params: Record<string, string>,
+    isClusterScope?: boolean
+  ) => {
     try {
       const kvList = Object.entries(params).map(([k, v]) => `${k}=${v}`);
       const payload = {
-        resourceKind: 'WorkflowTemplate',
+        resourceKind: isClusterScope ? 'ClusterWorkflowTemplate' : 'WorkflowTemplate',
         resourceName: templateName,
         submitOptions: { parameters: kvList }
       };
@@ -343,6 +361,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
       value={{
         workflows,
         templates,
+        clusterTemplates,
         cronWorkflows,
         selectedNamespace,
         setSelectedNamespace,

@@ -56,6 +56,7 @@
 
         kubectl apply -f "${config.devenv.root}/k8s/examples/workflow-template-bash.yaml"
         kubectl apply -f "${config.devenv.root}/k8s/examples/workflow-template-python.yaml"
+        kubectl apply -f "${config.devenv.root}/k8s/examples/cluster-workflow-template-whalesay.yaml"
         kubectl apply -f "${config.devenv.root}/k8s/examples/cron-workflow-backup.yaml"
       '';
       after = [ "kind:argo-install" ];

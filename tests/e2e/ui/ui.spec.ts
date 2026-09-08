@@ -33,6 +33,7 @@ test.describe('OGRA UI End-to-End Test Suite', () => {
     await expect(page.getByText('All Systems Operational')).toBeVisible();
     await expect(page.getByRole('button', { name: /^Workflows/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Workflow Templates/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Cluster Workflow Templates/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Cron Workflows/ })).toBeVisible();
   });
 
@@ -65,6 +66,16 @@ test.describe('OGRA UI End-to-End Test Suite', () => {
     await expect(page.getByRole('heading', { name: 'bash-simulation-template', exact: true }).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'python-data-pipeline', exact: true }).first()).toBeVisible();
 
+    // Navigate back and click Cluster Workflow Templates card
+    await page.goto('/');
+    await page.getByTitle('Refresh current data').click();
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: /^Cluster Workflow Templates/ }).click();
+    await expect(page.url()).toContain('kind=ClusterWorkflowTemplate');
+
+    // Verify cluster template is shown
+    await expect(page.getByRole('heading', { name: 'cluster-whalesay-template', exact: true }).first()).toBeVisible();
+
     // Navigate back and click Cron Workflows card
     await page.goto('/');
     await page.getByTitle('Refresh current data').click();
@@ -85,6 +96,7 @@ test.describe('OGRA UI End-to-End Test Suite', () => {
     await expect(page.getByRole('heading', { name: 'Resources' })).toBeVisible();
 
     await expect(page.getByRole('heading', { name: 'bash-simulation-template', exact: true }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'cluster-whalesay-template', exact: true }).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'periodic-backup-job', exact: true }).first()).toBeVisible();
   });
 
@@ -112,6 +124,21 @@ test.describe('OGRA UI End-to-End Test Suite', () => {
 
     await page.getByTestId('global-search-input').fill('kind:Work');
     await expect(page.getByTestId('suggestion-kind-Workflow')).toBeVisible();
+
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('chip-kind')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+  });
+
+  test('search: kind:ClusterWorkflowTemplate autocomplete creates filter chip', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(500);
+
+    await page.getByTestId('search-btn').click();
+
+    await page.getByTestId('global-search-input').fill('kind:Cluster');
+    await expect(page.getByTestId('suggestion-kind-ClusterWorkflowTemplate')).toBeVisible();
 
     await page.keyboard.press('Tab');
     await expect(page.getByTestId('chip-kind')).toBeVisible();
@@ -474,6 +501,32 @@ test.describe('OGRA UI End-to-End Test Suite', () => {
 
     await expect(page).toHaveURL(new RegExp(`/templates/${env.namespace}/bash-simulation-template`));
     await expect(page.getByTestId('template-detail-badge')).toBeVisible();
+  });
+
+  test('cluster template detail: view, trigger modal, target namespace selection, and launch', async ({ page }) => {
+    await page.goto('/#/cluster-templates/cluster-whalesay-template');
+    await expect(page.getByTestId('cwt-detail-badge')).toBeVisible();
+
+    await expect(page.getByText(/INSTANTIATED WORKFLOWS/)).toBeVisible();
+    await expect(page.getByText('DESCRIPTION', { exact: true })).toBeVisible();
+    await expect(page.getByText('STATISTICS', { exact: true })).toBeVisible();
+
+    await page.getByTestId('trigger-cwt-detail-btn').click();
+    await expect(page.getByText('SUBMIT CLUSTER WORKFLOW')).toBeVisible();
+
+    await page.getByTestId('cwt-target-namespace-select').selectOption(env.namespace);
+    await page.getByTestId('launch-workflow-btn').click();
+    await expect(page).toHaveURL(new RegExp(`/workflows/${env.namespace}/cluster-whalesay-template-`), { timeout: 15000 });
+
+    await page.getByTitle('Refresh current data').click();
+    await page.waitForTimeout(1000);
+
+    await expect(page.getByText('SOURCE TEMPLATE:')).toBeVisible();
+    const sourceTemplateLink = page.getByRole('button', { name: 'cluster-whalesay-template' });
+    await sourceTemplateLink.click();
+
+    await expect(page).toHaveURL(new RegExp(`/cluster-templates/cluster-whalesay-template`));
+    await expect(page.getByTestId('cwt-detail-badge')).toBeVisible();
   });
 
   test('global search: overlay opens and finds resources', async ({ page }) => {

@@ -148,6 +148,9 @@ func NewKubeClients(opts KubeConfigOptions) (*KubeClients, error) {
 		activeContext = "in-cluster"
 	}
 
+	cfg.QPS = 50
+	cfg.Burst = 100
+
 	typedClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)

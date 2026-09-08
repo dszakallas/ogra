@@ -281,3 +281,71 @@ func TestWorkflowRetryNotFound(t *testing.T) {
 	code, _ := env.doRequest("PUT", "/api/v1/workflows/"+env.namespace+"/nonexistent-workflow-xyz/retry", nil)
 	require.Equal(t, 404, code, "retry should return 404 for non-existent workflow")
 }
+
+func TestClusterWorkflowTemplateOperations(t *testing.T) {
+	env := setupAPIEnv(t, "cwt-ops")
+
+	code, resp := env.doRequest("GET", "/api/v1/cluster-workflow-templates", nil)
+	require.Equal(t, 200, code)
+	items, ok := resp["items"].([]any)
+	require.True(t, ok)
+	require.GreaterOrEqual(t, len(items), 1, "expected at least 1 cluster workflow template")
+
+	var foundWhalesay bool
+	for _, item := range items {
+		itemMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		meta, ok := itemMap["metadata"].(map[string]any)
+		if !ok {
+			continue
+		}
+		if meta["name"] == "cluster-whalesay-template" {
+			foundWhalesay = true
+			break
+		}
+	}
+	require.True(t, foundWhalesay, "expected cluster-whalesay-template to be present in cluster templates list")
+
+	code, getResp := env.doRequest("GET", "/api/v1/cluster-workflow-templates/cluster-whalesay-template", nil)
+	require.Equal(t, 200, code)
+	getMeta, ok := getResp["metadata"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "cluster-whalesay-template", getMeta["name"])
+
+	code, _ = env.doRequest("GET", "/api/v1/cluster-workflow-templates/nonexistent-cluster-template-xyz", nil)
+	require.Equal(t, 404, code)
+
+	submitPayload := map[string]any{
+		"resourceKind": "ClusterWorkflowTemplate",
+		"resourceName": "cluster-whalesay-template",
+		"submitOptions": map[string]any{
+			"parameters": []string{"message=Hello from E2E API Test"},
+		},
+	}
+	code, submitResp := env.doRequest("POST", "/api/v1/workflows/"+env.namespace+"/submit", submitPayload)
+	require.Equal(t, 201, code)
+
+	meta, ok := submitResp["metadata"].(map[string]any)
+	require.True(t, ok)
+	wfName, ok := meta["name"].(string)
+	require.True(t, ok)
+	require.True(t, strings.HasPrefix(wfName, "cluster-whalesay-template-"))
+
+	labels, ok := meta["labels"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "cluster-whalesay-template", labels["workflows.argoproj.io/cluster-workflow-template"])
+
+	code, wfResp := env.doRequest("GET", "/api/v1/workflows/"+env.namespace+"/"+wfName, nil)
+	require.Equal(t, 200, code)
+	spec, ok := wfResp["spec"].(map[string]any)
+	require.True(t, ok)
+	tplRef, ok := spec["workflowTemplateRef"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "cluster-whalesay-template", tplRef["name"])
+	require.Equal(t, true, tplRef["clusterScope"])
+
+	code, _ = env.doRequest("DELETE", "/api/v1/workflows/"+env.namespace+"/"+wfName, nil)
+	require.Equal(t, 200, code)
+}

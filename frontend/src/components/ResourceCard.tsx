@@ -1,22 +1,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Play, BookOpen, Clock } from 'lucide-react';
-import { Workflow, WorkflowTemplate, CronWorkflow } from '../types';
+import { Star, Play, BookOpen, Clock, Globe } from 'lucide-react';
+import { Workflow, WorkflowTemplate, ClusterWorkflowTemplate, CronWorkflow } from '../types';
 import { PhaseBadge } from './PhaseBadge';
 import { getRelativeTime } from '../utils/time';
 import { useCluster } from '../context/ClusterContext';
 
-type ResourceKind = 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow';
+type ResourceKind = 'Workflow' | 'WorkflowTemplate' | 'ClusterWorkflowTemplate' | 'CronWorkflow';
 
 interface ResourceCardProps {
   kind: ResourceKind;
-  resource: Workflow | WorkflowTemplate | CronWorkflow;
+  resource: Workflow | WorkflowTemplate | ClusterWorkflowTemplate | CronWorkflow;
 }
 
 function getKindColor(kind: ResourceKind): string {
   switch (kind) {
     case 'Workflow': return 'bg-indigo-950/30 text-indigo-400 border-indigo-900/40';
     case 'WorkflowTemplate': return 'bg-cyan-950/30 text-cyan-400 border-cyan-900/40';
+    case 'ClusterWorkflowTemplate': return 'bg-teal-950/30 text-teal-400 border-teal-900/40';
     case 'CronWorkflow': return 'bg-amber-950/30 text-amber-400 border-amber-900/40';
   }
 }
@@ -25,6 +26,7 @@ function getKindLabel(kind: ResourceKind): string {
   switch (kind) {
     case 'Workflow': return 'WORKFLOW';
     case 'WorkflowTemplate': return 'TEMPLATE';
+    case 'ClusterWorkflowTemplate': return 'CLUSTER TEMPLATE';
     case 'CronWorkflow': return 'CRON';
   }
 }
@@ -33,19 +35,21 @@ function getKindIcon(kind: ResourceKind) {
   switch (kind) {
     case 'Workflow': return <Play className="w-3 h-3" />;
     case 'WorkflowTemplate': return <BookOpen className="w-3 h-3" />;
+    case 'ClusterWorkflowTemplate': return <Globe className="w-3 h-3" />;
     case 'CronWorkflow': return <Clock className="w-3 h-3" />;
   }
 }
 
-function getRoute(kind: ResourceKind, namespace: string, name: string): string {
+function getRoute(kind: ResourceKind, namespace: string | undefined, name: string): string {
   switch (kind) {
     case 'Workflow': return `/workflows/${namespace}/${name}`;
     case 'WorkflowTemplate': return `/templates/${namespace}/${name}`;
+    case 'ClusterWorkflowTemplate': return `/cluster-templates/${name}`;
     case 'CronWorkflow': return `/cron/${namespace}/${name}`;
   }
 }
 
-function getPhase(resource: Workflow | WorkflowTemplate | CronWorkflow, kind: ResourceKind): string {
+function getPhase(resource: Workflow | WorkflowTemplate | ClusterWorkflowTemplate | CronWorkflow, kind: ResourceKind): string {
   if (kind === 'Workflow') {
     const wf = resource as Workflow;
     if (wf.spec?.suspend) return 'Suspended';
@@ -58,7 +62,7 @@ function getPhase(resource: Workflow | WorkflowTemplate | CronWorkflow, kind: Re
   return 'Ready';
 }
 
-function getTime(resource: Workflow | WorkflowTemplate | CronWorkflow, kind: ResourceKind): string {
+function getTime(resource: Workflow | WorkflowTemplate | ClusterWorkflowTemplate | CronWorkflow, kind: ResourceKind): string {
   if (kind === 'Workflow') {
     const wf = resource as Workflow;
     return getRelativeTime(wf.status?.startedAt || wf.metadata.creationTimestamp);
@@ -67,10 +71,10 @@ function getTime(resource: Workflow | WorkflowTemplate | CronWorkflow, kind: Res
     const cron = resource as CronWorkflow;
     return getRelativeTime(cron.status?.lastScheduledTime || cron.metadata.creationTimestamp);
   }
-  return getRelativeTime((resource as WorkflowTemplate).metadata.creationTimestamp);
+  return getRelativeTime(resource.metadata.creationTimestamp);
 }
 
-function getMessage(resource: Workflow | WorkflowTemplate | CronWorkflow, kind: ResourceKind): string {
+function getMessage(resource: Workflow | WorkflowTemplate | ClusterWorkflowTemplate | CronWorkflow, kind: ResourceKind): string {
   if (kind === 'Workflow') {
     const wf = resource as Workflow;
     if (wf.status?.message) return wf.status.message;
@@ -85,7 +89,7 @@ function getMessage(resource: Workflow | WorkflowTemplate | CronWorkflow, kind: 
     const failed = cron.status?.failed || 0;
     return `${schedule} · ${succeeded} ok / ${failed} failed`;
   }
-  const tmpl = resource as WorkflowTemplate;
+  const tmpl = resource as (WorkflowTemplate | ClusterWorkflowTemplate);
   const desc = tmpl.metadata.annotations?.['workflows.argoproj.io/description'] || '';
   const paramsCount = tmpl.spec.arguments?.parameters?.length || 0;
   return desc || `${paramsCount} parameters`;
@@ -131,7 +135,7 @@ export function ResourceCard({ kind, resource }: ResourceCardProps) {
 
       <div className="min-w-0">
         <span className="text-[9px] text-zinc-500 font-mono block uppercase font-black tracking-widest">
-          {namespace}
+          {namespace || 'Cluster Scoped'}
         </span>
         <h2 className="text-sm font-bold text-zinc-200 truncate font-mono tracking-tight group-hover:text-indigo-400 transition-colors select-text">
           {name}

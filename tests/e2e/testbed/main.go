@@ -14,6 +14,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -188,8 +189,6 @@ func applyYAMLContent(clients *config.KubeClients, namespace, content string) er
 		}
 
 		u := &unstructured.Unstructured{Object: raw}
-		u.SetNamespace(namespace)
-
 		gvk := u.GroupVersionKind()
 		resource := guessPluralResource(gvk.Kind)
 
@@ -199,12 +198,34 @@ func applyYAMLContent(clients *config.KubeClients, namespace, content string) er
 			Resource: resource,
 		}
 
-		_, err = clients.Dynamic.Resource(gvr).Namespace(namespace).Create(ctx, u, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("create %s/%s in %s: %w", gvk.Kind, u.GetName(), namespace, err)
+		if isClusterScoped(gvk.Kind) {
+			u.SetNamespace("")
+			_, err = clients.Dynamic.Resource(gvr).Create(ctx, u, metav1.CreateOptions{})
+			if err != nil {
+				if apierrors.IsAlreadyExists(err) {
+					existing, getErr := clients.Dynamic.Resource(gvr).Get(ctx, u.GetName(), metav1.GetOptions{})
+					if getErr == nil {
+						u.SetResourceVersion(existing.GetResourceVersion())
+						_, err = clients.Dynamic.Resource(gvr).Update(ctx, u, metav1.UpdateOptions{})
+					}
+				}
+				if err != nil && !apierrors.IsAlreadyExists(err) {
+					return fmt.Errorf("create cluster-scoped %s/%s: %w", gvk.Kind, u.GetName(), err)
+				}
+			}
+		} else {
+			u.SetNamespace(namespace)
+			_, err = clients.Dynamic.Resource(gvr).Namespace(namespace).Create(ctx, u, metav1.CreateOptions{})
+			if err != nil {
+				return fmt.Errorf("create %s/%s in %s: %w", gvk.Kind, u.GetName(), namespace, err)
+			}
 		}
 	}
 	return nil
+}
+
+func isClusterScoped(kind string) bool {
+	return kind == "ClusterWorkflowTemplate" || kind == "ClusterRole" || kind == "ClusterRoleBinding"
 }
 
 func guessPluralResource(kind string) string {

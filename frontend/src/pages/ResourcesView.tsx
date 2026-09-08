@@ -1,51 +1,61 @@
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Star, Layers, Activity, AlertCircle } from 'lucide-react';
-import { Workflow, WorkflowTemplate, CronWorkflow } from '../types';
+import { Workflow, WorkflowTemplate, ClusterWorkflowTemplate, CronWorkflow } from '../types';
 import { useCluster, ResourceEvent } from '../context/ClusterContext';
 import { ResourceCard } from '../components/ResourceCard';
 import { getRelativeTime } from '../utils/time';
 
 type SubTab = 'resources' | 'favorites' | 'events';
 
+type ResourceKind = 'Workflow' | 'WorkflowTemplate' | 'ClusterWorkflowTemplate' | 'CronWorkflow';
+
 interface UnifiedResource {
-  kind: 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow';
-  resource: Workflow | WorkflowTemplate | CronWorkflow;
+  kind: ResourceKind;
+  resource: Workflow | WorkflowTemplate | ClusterWorkflowTemplate | CronWorkflow;
 }
 
 export function ResourcesView() {
-  const { workflows, templates, cronWorkflows, favorites, eventHistory } = useCluster();
+  const { workflows, templates, clusterTemplates, cronWorkflows, favorites, eventHistory } = useCluster();
   const [searchParams] = useSearchParams();
 
   const initialTab = searchParams.get('tab') as SubTab | null;
-  const kindFilter = searchParams.get('kind') as 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow' | null;
+  const kindFilter = searchParams.get('kind') as ResourceKind | null;
   const nsFilter = searchParams.get('ns') || null;
   const queryFilter = searchParams.get('q') || null;
   const [activeTab, setActiveTab] = useState<SubTab>(initialTab === 'favorites' || initialTab === 'events' ? initialTab : 'resources');
 
   const allResources: UnifiedResource[] = useMemo(() => {
-    const resources = [
+    const resources: UnifiedResource[] = [
       ...workflows.map((w) => ({ kind: 'Workflow' as const, resource: w })),
       ...templates.map((t) => ({ kind: 'WorkflowTemplate' as const, resource: t })),
+      ...clusterTemplates.map((ct) => ({ kind: 'ClusterWorkflowTemplate' as const, resource: ct })),
       ...cronWorkflows.map((c) => ({ kind: 'CronWorkflow' as const, resource: c }))
     ];
 
     return resources.filter((r) => {
       if (kindFilter && r.kind !== kindFilter) return false;
-      if (nsFilter && r.resource.metadata.namespace !== nsFilter) return false;
+      if (nsFilter) {
+        if (r.kind === 'ClusterWorkflowTemplate') {
+          if (kindFilter !== 'ClusterWorkflowTemplate') return false;
+        } else if (r.resource.metadata.namespace !== nsFilter) {
+          return false;
+        }
+      }
       if (queryFilter) {
         const q = queryFilter.toLowerCase();
         const name = r.resource.metadata.name.toLowerCase();
-        const ns = r.resource.metadata.namespace.toLowerCase();
+        const ns = (r.resource.metadata.namespace || '').toLowerCase();
         if (!name.includes(q) && !ns.includes(q) && !`${ns}/${name}`.includes(q)) return false;
       }
       return true;
     });
-  }, [workflows, templates, cronWorkflows, kindFilter, nsFilter, queryFilter]);
+  }, [workflows, templates, clusterTemplates, cronWorkflows, kindFilter, nsFilter, queryFilter]);
 
   const favoritedResources = useMemo(() => {
     return allResources.filter(({ kind, resource }) => {
-      const key = `${kind}/${resource.metadata.namespace}/${resource.metadata.name}`;
+      const ns = resource.metadata.namespace || '_';
+      const key = `${kind}/${ns}/${resource.metadata.name}`;
       return favorites.has(key);
     });
   }, [allResources, favorites]);

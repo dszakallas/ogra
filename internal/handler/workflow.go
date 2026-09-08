@@ -144,6 +144,18 @@ func (h *WorkflowHandler) SubmitWorkflow(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
+	isClusterScope := req.ResourceKind == "ClusterWorkflowTemplate"
+	wfTplRef := map[string]any{
+		"name": req.ResourceName,
+	}
+	labels := map[string]string{}
+	if isClusterScope {
+		wfTplRef["clusterScope"] = true
+		labels["workflows.argoproj.io/cluster-workflow-template"] = req.ResourceName
+	} else {
+		labels["workflows.argoproj.io/workflow-template"] = req.ResourceName
+	}
+
 	wfObj := &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": "argoproj.io/v1alpha1",
@@ -151,14 +163,10 @@ func (h *WorkflowHandler) SubmitWorkflow(w http.ResponseWriter, r *http.Request,
 			"metadata": map[string]any{
 				"generateName": fmt.Sprintf("%s-", req.ResourceName),
 				"namespace":    ns,
-				"labels": map[string]string{
-					"workflows.argoproj.io/workflow-template": req.ResourceName,
-				},
+				"labels":       labels,
 			},
 			"spec": map[string]any{
-				"workflowTemplateRef": map[string]any{
-					"name": req.ResourceName,
-				},
+				"workflowTemplateRef": wfTplRef,
 				"arguments": map[string]any{
 					"parameters": params,
 				},
@@ -248,20 +256,15 @@ func (h *WorkflowHandler) RetryWorkflow(w http.ResponseWriter, r *http.Request, 
 	}
 
 	statusPatch := `{"status":{"phase":"","message":null,"finishedAt":null},"spec":{"suspend":null,"shutdown":null},"metadata":{"labels":{"workflows.argoproj.io/completed":null}}}`
-	if _, err := h.dynClient.Resource(workflowResource).Namespace(ns).Patch(
+	patched, err := h.dynClient.Resource(workflowResource).Namespace(ns).Patch(
 		r.Context(), name, types.MergePatchType, []byte(statusPatch), metav1.PatchOptions{},
-	); err != nil {
+	)
+	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to retry workflow: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	updated, err := h.dynClient.Resource(workflowResource).Namespace(ns).Get(r.Context(), name, metav1.GetOptions{})
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to fetch retried workflow: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	writeJSON(w, updated)
+	writeJSON(w, patched)
 }
 
 // DeleteWorkflow removes a workflow resource.

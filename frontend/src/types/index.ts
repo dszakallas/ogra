@@ -1,10 +1,11 @@
 import { components as WorkflowComponents } from './generated/Workflow';
 import { components as WorkflowTemplateComponents } from './generated/WorkflowTemplate';
+import { components as ClusterWorkflowTemplateComponents } from './generated/ClusterWorkflowTemplate';
 import { components as CronWorkflowComponents } from './generated/CronWorkflow';
 
 export interface ObjectMeta {
   name: string;
-  namespace: string;
+  namespace?: string;
   uid?: string;
   resourceVersion?: string;
   generation?: number;
@@ -14,13 +15,16 @@ export interface ObjectMeta {
 }
 
 export type Workflow = Omit<WorkflowComponents['schemas']['Workflow'], 'metadata'> & {
-  metadata: ObjectMeta;
+  metadata: ObjectMeta & { namespace: string };
 };
 export type WorkflowTemplate = Omit<WorkflowTemplateComponents['schemas']['WorkflowTemplate'], 'metadata'> & {
+  metadata: ObjectMeta & { namespace: string };
+};
+export type ClusterWorkflowTemplate = Omit<ClusterWorkflowTemplateComponents['schemas']['ClusterWorkflowTemplate'], 'metadata'> & {
   metadata: ObjectMeta;
 };
 export type CronWorkflow = Omit<CronWorkflowComponents['schemas']['CronWorkflow'], 'metadata'> & {
-  metadata: ObjectMeta;
+  metadata: ObjectMeta & { namespace: string };
 };
 
 export type WorkflowPhase = string;
