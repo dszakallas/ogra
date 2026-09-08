@@ -170,6 +170,12 @@
     description = "Run Go E2E API tests manually";
   };
 
+  tasks."frontend:install" = {
+    exec = "npm --prefix frontend ci";
+    status = "test -d frontend/node_modules";
+    before = [ "devenv:enterShell" ];
+  };
+
   tasks."api-test:run" = {
     exec = ''
       api-test -p "${toString config.processes.backend.ports.http.value}"
