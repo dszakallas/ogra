@@ -33,7 +33,7 @@ interface WorkflowDetailProps {
   onTerminate: (namespace: string, name: string) => void;
   onRetry: (namespace: string, name: string) => void;
   onDelete: (namespace: string, name: string) => void;
-  onResubmit: (namespace: string, templateName: string, params: Record<string, string>) => void;
+  onResubmit: (namespace: string, templateName: string, params: Record<string, string>, isCluster?: boolean) => void;
 }
 
 type TabType = 'SUMMARY' | 'NODES' | 'TIMELINE' | 'LOGS';
@@ -215,7 +215,7 @@ export function WorkflowDetail({
                         workflowParams.forEach((p) => {
                           keyvals[p.name] = p.value || '';
                         });
-                        onResubmit(namespace!, templateName, keyvals);
+                        onResubmit(namespace!, templateName, keyvals, workflow.spec?.workflowTemplateRef?.clusterScope);
                       } else {
                         alert('This workflow does not reference an external template; resubmission from source is required.');
                       }
@@ -429,7 +429,13 @@ export function WorkflowDetail({
                   <div className="flex justify-between items-center gap-4 border-t border-zinc-900/60 pt-2.5">
                     <span>SOURCE TEMPLATE:</span>
                     <button
-                      onClick={() => navigate(`/templates/${namespace}/${workflow.spec.workflowTemplateRef!.name}`)}
+                      onClick={() => {
+                        if (workflow.spec?.workflowTemplateRef?.clusterScope) {
+                          navigate(`/cluster-templates/${workflow.spec.workflowTemplateRef.name}`);
+                        } else {
+                          navigate(`/templates/${namespace}/${workflow.spec!.workflowTemplateRef!.name}`);
+                        }
+                      }}
                       className="text-indigo-400 hover:text-indigo-300 font-bold underline flex items-center gap-1"
                     >
                       <span>{workflow.spec.workflowTemplateRef?.name}</span>

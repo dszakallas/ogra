@@ -64,6 +64,7 @@ func main() {
 	infoH := handler.NewInfoHandler(clients.Typed, serverCfg)
 	wfH := handler.NewWorkflowHandler(clients.Dynamic, serverCfg)
 	wfTplH := handler.NewWorkflowTemplateHandler(clients.Dynamic, serverCfg)
+	clusterWfTplH := handler.NewClusterWorkflowTemplateHandler(clients.Dynamic, serverCfg)
 	cronH := handler.NewCronWorkflowHandler(clients.Dynamic, serverCfg)
 	eventsH := handler.NewEventsHandler(clients.Dynamic, serverCfg)
 	logsH := handler.NewLogsHandler(clients.Typed)
@@ -99,6 +100,14 @@ func main() {
 	// WorkflowTemplates Router
 	mux.HandleFunc("GET /api/v1/workflow-templates/{namespace}", func(w http.ResponseWriter, r *http.Request) {
 		wfTplH.ListWorkflowTemplates(w, r, r.PathValue("namespace"))
+	})
+
+	// ClusterWorkflowTemplates Router
+	mux.HandleFunc("GET /api/v1/cluster-workflow-templates", func(w http.ResponseWriter, r *http.Request) {
+		clusterWfTplH.ListClusterWorkflowTemplates(w, r)
+	})
+	mux.HandleFunc("GET /api/v1/cluster-workflow-templates/{name}", func(w http.ResponseWriter, r *http.Request) {
+		clusterWfTplH.GetClusterWorkflowTemplate(w, r, r.PathValue("name"))
 	})
 
 	// CronWorkflows Router

@@ -8,6 +8,7 @@ import { ResourcesView } from './pages/ResourcesView';
 import { WorkflowDetail } from './pages/WorkflowDetail';
 import { CronWorkflowDetail } from './pages/CronWorkflowDetail';
 import { WorkflowTemplateDetail } from './pages/WorkflowTemplateDetail';
+import { ClusterWorkflowTemplateDetail } from './pages/ClusterWorkflowTemplateDetail';
 import { SearchOverlay } from './components/SearchOverlay';
 
 function AppContent() {
@@ -17,6 +18,7 @@ function AppContent() {
   const {
     workflows,
     templates,
+    clusterTemplates,
     cronWorkflows,
     setSelectedNamespace,
     loading,
@@ -35,10 +37,14 @@ function AppContent() {
 
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const handleResubmitBridge = (ns: string, templateName: string, ..._rest: unknown[]) => {
-    void _rest;
-    setSelectedNamespace(ns);
-    navigate(`/templates/${ns}/${templateName}`);
+  const handleResubmitBridge = (ns: string, templateName: string, ...rest: unknown[]) => {
+    const isCluster = rest[1] as boolean | undefined;
+    if (isCluster) {
+      navigate(`/cluster-templates/${templateName}`);
+    } else {
+      setSelectedNamespace(ns);
+      navigate(`/templates/${ns}/${templateName}`);
+    }
   };
 
   const handleSearchKey = useCallback((e: KeyboardEvent) => {
@@ -131,6 +137,16 @@ function AppContent() {
               }
             />
             <Route
+              path="/cluster-templates/:name"
+              element={
+                <ClusterWorkflowTemplateDetail
+                  clusterTemplates={clusterTemplates}
+                  workflows={workflows}
+                  onSubmitWorkflow={handleWorkflowSubmit}
+                />
+              }
+            />
+            <Route
               path="/cron/:namespace/:name"
               element={
                 <CronWorkflowDetail
@@ -167,7 +183,7 @@ function AppContent() {
             to="/resources"
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 text-center transition-all ${
-                isActive || currentPath.startsWith('/workflows') || currentPath.startsWith('/templates') || currentPath.startsWith('/cron')
+                isActive || currentPath.startsWith('/workflows') || currentPath.startsWith('/templates') || currentPath.startsWith('/cluster-templates') || currentPath.startsWith('/cron')
                   ? 'text-indigo-400 scale-105' 
                   : 'text-zinc-500 hover:text-zinc-300'
               }`

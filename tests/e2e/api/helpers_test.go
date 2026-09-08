@@ -106,6 +106,7 @@ func buildMux(clients *config.KubeClients) *http.ServeMux {
 	infoH := handler.NewInfoHandler(clients.Typed, nil)
 	wfH := handler.NewWorkflowHandler(clients.Dynamic, nil)
 	wfTplH := handler.NewWorkflowTemplateHandler(clients.Dynamic, nil)
+	clusterWfTplH := handler.NewClusterWorkflowTemplateHandler(clients.Dynamic, nil)
 	cronH := handler.NewCronWorkflowHandler(clients.Dynamic, nil)
 	eventsH := handler.NewEventsHandler(clients.Dynamic, nil)
 	logsH := handler.NewLogsHandler(clients.Typed)
@@ -154,6 +155,18 @@ func buildMux(clients *config.KubeClients) *http.ServeMux {
 			return
 		}
 		http.NotFound(w, r)
+	})
+
+	mux.HandleFunc("/api/v1/cluster-workflow-templates", func(w http.ResponseWriter, r *http.Request) {
+		clusterWfTplH.ListClusterWorkflowTemplates(w, r)
+	})
+	mux.HandleFunc("/api/v1/cluster-workflow-templates/", func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/api/v1/cluster-workflow-templates/")
+		if path != "" {
+			clusterWfTplH.GetClusterWorkflowTemplate(w, r, path)
+			return
+		}
+		clusterWfTplH.ListClusterWorkflowTemplates(w, r)
 	})
 
 	mux.HandleFunc("/api/v1/cron-workflows/", func(w http.ResponseWriter, r *http.Request) {

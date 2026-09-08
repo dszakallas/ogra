@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Layers, BookOpen, Calendar, XCircle, Star } from 'lucide-react';
+import { Search, X, Layers, BookOpen, Calendar, XCircle, Star, Globe } from 'lucide-react';
 import { useCluster } from '../context/ClusterContext';
 
 interface SearchOverlayProps {
@@ -8,18 +8,18 @@ interface SearchOverlayProps {
   onClose: () => void;
 }
 
-type SearchKind = 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow';
+type SearchKind = 'Workflow' | 'WorkflowTemplate' | 'CronWorkflow' | 'ClusterWorkflowTemplate';
 
 interface SearchResult {
   kind: SearchKind;
-  namespace: string;
+  namespace?: string;
   name: string;
   phase?: string;
 }
 
 interface RecentItem {
   kind: SearchKind;
-  namespace: string;
+  namespace?: string;
   name: string;
 }
 
@@ -31,13 +31,14 @@ interface Chip {
 const RECENT_KEY = 'ogra-search-recent';
 const RECENT_MAX = 10;
 
-const ALL_KINDS: SearchKind[] = ['Workflow', 'WorkflowTemplate', 'CronWorkflow'];
+const ALL_KINDS: SearchKind[] = ['Workflow', 'WorkflowTemplate', 'CronWorkflow', 'ClusterWorkflowTemplate'];
 
-function getRoute(kind: SearchKind, namespace: string, name: string): string {
+function getRoute(kind: SearchKind, namespace: string | undefined, name: string): string {
   switch (kind) {
     case 'Workflow': return `/workflows/${namespace}/${name}`;
     case 'WorkflowTemplate': return `/templates/${namespace}/${name}`;
     case 'CronWorkflow': return `/cron/${namespace}/${name}`;
+    case 'ClusterWorkflowTemplate': return `/cluster-templates/${name}`;
   }
 }
 
@@ -46,6 +47,7 @@ function getKindIcon(kind: SearchKind) {
     case 'Workflow': return <Layers className="w-3.5 h-3.5 text-indigo-400 shrink-0" />;
     case 'WorkflowTemplate': return <BookOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />;
     case 'CronWorkflow': return <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />;
+    case 'ClusterWorkflowTemplate': return <Globe className="w-3.5 h-3.5 text-teal-400 shrink-0" />;
   }
 }
 
@@ -54,6 +56,7 @@ function getKindLabel(kind: SearchKind): string {
     case 'Workflow': return 'Workflows';
     case 'WorkflowTemplate': return 'Templates';
     case 'CronWorkflow': return 'Cron';
+    case 'ClusterWorkflowTemplate': return 'Cluster Templates';
   }
 }
 
@@ -69,7 +72,7 @@ function saveRecent(items: RecentItem[]) {
   localStorage.setItem(RECENT_KEY, JSON.stringify(items));
 }
 
-function addRecent(kind: SearchKind, namespace: string, name: string) {
+function addRecent(kind: SearchKind, namespace: string | undefined, name: string) {
   const items = loadRecent().filter(
     (r) => !(r.kind === kind && r.namespace === namespace && r.name === name)
   );
@@ -97,7 +100,7 @@ function parseCompletion(input: string): { mode: CompletionMode; prefix: string;
 
 export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const navigate = useNavigate();
-  const { workflows, templates, cronWorkflows, namespaces, isFavorite } = useCluster();
+  const { workflows, templates, clusterTemplates, cronWorkflows, namespaces, isFavorite } = useCluster();
   const [input, setInput] = useState('');
   const [chips, setChips] = useState<Chip[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -134,8 +137,9 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const allResources: SearchResult[] = useMemo(() => [
     ...workflows.map((w) => ({ kind: 'Workflow' as const, namespace: w.metadata.namespace, name: w.metadata.name, phase: w.status?.phase })),
     ...templates.map((t) => ({ kind: 'WorkflowTemplate' as const, namespace: t.metadata.namespace, name: t.metadata.name })),
+    ...clusterTemplates.map((ct) => ({ kind: 'ClusterWorkflowTemplate' as const, namespace: ct.metadata?.namespace, name: ct.metadata?.name || '' })),
     ...cronWorkflows.map((c) => ({ kind: 'CronWorkflow' as const, namespace: c.metadata.namespace, name: c.metadata.name }))
-  ], [workflows, templates, cronWorkflows]);
+  ], [workflows, templates, clusterTemplates, cronWorkflows]);
 
   const suggestions: string[] = useMemo(() => {
     if (!completionMode) return [];
@@ -171,7 +175,9 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
       if (nsFilter && r.namespace !== nsFilter) return false;
       if (!isWildcard) {
         const q = query.toLowerCase();
-        if (!r.name.toLowerCase().includes(q) && !`${r.namespace}/${r.name}`.toLowerCase().includes(q)) return false;
+        const matchesName = r.name.toLowerCase().includes(q);
+        const matchesNs = r.namespace ? `${r.namespace}/${r.name}`.toLowerCase().includes(q) : false;
+        if (!matchesName && !matchesNs) return false;
       }
       return true;
     });
@@ -186,7 +192,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     }).slice(0, 30);
   }, [searchPart, kindFilter, nsFilter, allResources, isFavorite]);
 
-  const handleNavigate = useCallback((kind: SearchKind, namespace: string, name: string) => {
+  const handleNavigate = useCallback((kind: SearchKind, namespace: string | undefined, name: string) => {
     addRecent(kind, namespace, name);
     setRecent(loadRecent());
     navigate(getRoute(kind, namespace, name));
@@ -203,7 +209,9 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
       if (nsFilter && r.namespace !== nsFilter) return false;
       if (searchPart && searchPart !== '*' && searchPart !== '**') {
         const q = searchPart.toLowerCase();
-        if (!r.name.toLowerCase().includes(q) && !`${r.namespace}/${r.name}`.toLowerCase().includes(q)) return false;
+        const matchesName = r.name.toLowerCase().includes(q);
+        const matchesNs = r.namespace ? `${r.namespace}/${r.name}`.toLowerCase().includes(q) : false;
+        if (!matchesName && !matchesNs) return false;
       }
       return true;
     });
@@ -333,14 +341,14 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                 </div>
                 {filteredRecent.map((r, i) => (
                   <button
-                    key={`${r.kind}/${r.namespace}/${r.name}-${i}`}
+                    key={`${r.kind}/${r.namespace ?? '_'}/${r.name}-${i}`}
                     data-testid="search-recent-item"
                     onClick={() => handleNavigate(r.kind, r.namespace, r.name)}
                     className="w-full text-left px-3 py-2 flex items-center gap-3 hover:bg-zinc-900/60 transition-colors border-b border-zinc-800/30 last:border-0"
                   >
                     {getKindIcon(r.kind)}
                     <span className="text-xs font-mono text-zinc-300 truncate">
-                      <span className="text-zinc-500">{r.kind}/</span>{r.namespace}/{r.name}
+                      <span className="text-zinc-500">{r.kind}/</span>{r.namespace ? `${r.namespace}/` : ''}{r.name}
                     </span>
                   </button>
                 ))}
@@ -355,7 +363,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
               const favorited = isFavorite(r.kind, r.namespace, r.name);
               return (
                 <button
-                  key={`${r.kind}/${r.namespace}/${r.name}-${i}`}
+                  key={`${r.kind}/${r.namespace ?? '_'}/${r.name}-${i}`}
                   data-testid="search-result"
                   onClick={() => handleNavigate(r.kind, r.namespace, r.name)}
                   className="w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-zinc-900/60 transition-colors border-b border-zinc-800/30 last:border-0"
@@ -363,7 +371,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   {getKindIcon(r.kind)}
                   <div className="min-w-0 flex-1">
                     <span className="text-xs font-bold text-zinc-200 font-mono block truncate">
-                      {r.namespace}/{r.name}
+                      {r.namespace ? `${r.namespace}/${r.name}` : r.name}
                     </span>
                   </div>
                   {favorited && (
