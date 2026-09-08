@@ -171,8 +171,8 @@
   };
 
   tasks."frontend:install" = {
-    exec = "npm --prefix frontend ci";
-    status = "test -d frontend/node_modules";
+    exec = "npm --prefix frontend ci --include=dev";
+    status = "test -d frontend/node_modules/@eslint/js";
     before = [ "devenv:enterShell" ];
   };
 

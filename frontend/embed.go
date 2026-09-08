@@ -7,5 +7,5 @@ import "embed"
 
 // DistFS contains the embedded static files from the frontend production build.
 //
-//go:embed dist
+//go:embed all:dist
 var DistFS embed.FS
