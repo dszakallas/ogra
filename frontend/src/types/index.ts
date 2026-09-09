@@ -42,6 +42,7 @@ export type NodeStatus = NonNullable<
 export interface ServerInfo {
   managedNamespaces: string[];
   links: Array<{ name: string; url: string; scope: string }>;
+  clusterWorkflowTemplates?: boolean;
 }
 
 export interface UserInfo {

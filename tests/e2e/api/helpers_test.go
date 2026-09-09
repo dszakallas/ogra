@@ -102,13 +102,17 @@ func testbedTeardown(namespace string) error {
 }
 
 func buildMux(clients *config.KubeClients) *http.ServeMux {
+	return buildMuxWithConfig(clients, nil)
+}
+
+func buildMuxWithConfig(clients *config.KubeClients, serverCfg *config.ServerConfig) *http.ServeMux {
 	mux := http.NewServeMux()
-	infoH := handler.NewInfoHandler(clients.Typed, nil)
-	wfH := handler.NewWorkflowHandler(clients.Dynamic, nil)
-	wfTplH := handler.NewWorkflowTemplateHandler(clients.Dynamic, nil)
-	clusterWfTplH := handler.NewClusterWorkflowTemplateHandler(clients.Dynamic, nil)
-	cronH := handler.NewCronWorkflowHandler(clients.Dynamic, nil)
-	eventsH := handler.NewEventsHandler(clients.Dynamic, nil)
+	infoH := handler.NewInfoHandler(clients.Typed, serverCfg)
+	wfH := handler.NewWorkflowHandler(clients.Dynamic, serverCfg)
+	wfTplH := handler.NewWorkflowTemplateHandler(clients.Dynamic, serverCfg)
+	clusterWfTplH := handler.NewClusterWorkflowTemplateHandler(clients.Dynamic, serverCfg)
+	cronH := handler.NewCronWorkflowHandler(clients.Dynamic, serverCfg)
+	eventsH := handler.NewEventsHandler(clients.Dynamic, serverCfg)
 	logsH := handler.NewLogsHandler(clients.Typed)
 
 	mux.HandleFunc("/api/v1/info", infoH.GetInfo)

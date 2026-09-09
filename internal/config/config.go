@@ -23,8 +23,9 @@ type KubeConfigOptions struct {
 
 // ServerConfig holds namespace scoping and server runtime settings matching Argo Workflows options.
 type ServerConfig struct {
-	Namespaced        bool
-	ManagedNamespaces []string
+	Namespaced               bool
+	ManagedNamespaces        []string
+	ClusterWorkflowTemplates bool
 }
 
 // GetPodNamespace returns the pod's serviceaccount namespace or fallback "default".
@@ -44,13 +45,23 @@ func GetPodNamespace() string {
 }
 
 // NewServerConfig initializes ServerConfig from flags/env vars matching Argo Workflows options.
-func NewServerConfig(namespacedFlag bool, managedNsFlag string) *ServerConfig {
+func NewServerConfig(namespacedFlag bool, managedNsFlag string, clusterWfTplExplicit *bool) *ServerConfig {
 	namespaced := namespacedFlag
 	if !namespaced {
 		envVal := strings.ToLower(os.Getenv("NAMESPACED"))
 		if envVal == "true" || envVal == "1" {
 			namespaced = true
 		}
+	}
+
+	var clusterWorkflowTemplates bool
+	if clusterWfTplExplicit != nil {
+		clusterWorkflowTemplates = *clusterWfTplExplicit
+	} else if envVal := os.Getenv("CLUSTER_WORKFLOW_TEMPLATES"); envVal != "" {
+		envLower := strings.ToLower(envVal)
+		clusterWorkflowTemplates = envLower == "true" || envLower == "1"
+	} else {
+		clusterWorkflowTemplates = !namespaced
 	}
 
 	managedStr := managedNsFlag
@@ -74,8 +85,9 @@ func NewServerConfig(namespacedFlag bool, managedNsFlag string) *ServerConfig {
 	}
 
 	return &ServerConfig{
-		Namespaced:        namespaced,
-		ManagedNamespaces: managedNamespaces,
+		Namespaced:               namespaced,
+		ManagedNamespaces:        managedNamespaces,
+		ClusterWorkflowTemplates: clusterWorkflowTemplates,
 	}
 }
 

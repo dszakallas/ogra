@@ -80,6 +80,7 @@ interface ClusterContextType {
   namespaces: string[];
   userInfo: UserInfo | null;
   serverInfo: ServerInfo | null;
+  clusterWorkflowTemplatesEnabled: boolean;
   loading: boolean;
   sseConnected: boolean;
   fetchData: () => Promise<void>;
@@ -117,6 +118,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
   const [namespaces, setNamespaces] = useState<string[]>([]);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
+  const [cwtAccessible, setCwtAccessible] = useState(true);
 
   const [sseConnected, setSseConnected] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -154,15 +156,20 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
   const fetchData = async () => {
     try {
       setLoading(true);
+      let cwtFailed = false;
       const [wfData, tmplData, cwtData, cronData, userData, infoData] = await Promise.all([
         apiFetch<{ items: Workflow[] }>('/api/v1/workflows/all'),
         apiFetch<{ items: WorkflowTemplate[] }>('/api/v1/workflow-templates/_'),
-        apiFetch<{ items: ClusterWorkflowTemplate[] }>('/api/v1/cluster-workflow-templates'),
+        apiFetch<{ items: ClusterWorkflowTemplate[] }>('/api/v1/cluster-workflow-templates').catch(() => {
+          cwtFailed = true;
+          return { items: [] };
+        }),
         apiFetch<{ items: CronWorkflow[] }>('/api/v1/cron-workflows/_'),
         apiFetch<UserInfo>('/api/v1/userinfo'),
         apiFetch<ServerInfo>('/api/v1/info')
       ]);
 
+      setCwtAccessible(!cwtFailed);
       setWorkflows(deduplicateResources(wfData.items || []));
       setTemplates(deduplicateResources(tmplData.items || []));
       setClusterTemplates(deduplicateResources(cwtData.items || []));
@@ -356,6 +363,8 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clusterWorkflowTemplatesEnabled = (serverInfo?.clusterWorkflowTemplates !== false) && cwtAccessible;
+
   return (
     <ClusterContext.Provider
       value={{
@@ -368,6 +377,7 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
         namespaces,
         userInfo,
         serverInfo,
+        clusterWorkflowTemplatesEnabled,
         loading,
         sseConnected,
         fetchData,

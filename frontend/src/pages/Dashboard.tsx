@@ -5,7 +5,7 @@ import { useCluster } from '../context/ClusterContext';
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { workflows, templates, clusterTemplates, cronWorkflows, sseConnected, serverInfo } = useCluster();
+  const { workflows, templates, clusterTemplates, cronWorkflows, sseConnected, serverInfo, clusterWorkflowTemplatesEnabled } = useCluster();
 
   const running = workflows.filter((w) => w.status?.phase === 'Running' && !w.spec?.suspend).length;
   const succeeded = workflows.filter((w) => w.status?.phase === 'Succeeded').length;
@@ -32,7 +32,8 @@ export function Dashboard() {
               {sseConnected ? 'All Systems Operational' : 'Watch Stream Disconnected'}
             </h2>
             <p className="text-[11px] text-zinc-500 font-mono">
-              {workflows.length} workflows · {templates.length} templates · {clusterTemplates.length} cluster templates · {cronWorkflows.length} cron schedules
+              {workflows.length} workflows · {templates.length} templates
+              {clusterWorkflowTemplatesEnabled ? ` · ${clusterTemplates.length} cluster templates` : ''} · {cronWorkflows.length} cron schedules
             </p>
           </div>
         </div>
@@ -65,13 +66,15 @@ export function Dashboard() {
           onClick={() => navigate('/resources?kind=WorkflowTemplate')}
         />
 
-        <KindCard
-          icon={<Globe className="w-5 h-5 text-teal-400" />}
-          title="Cluster Workflow Templates"
-          count={clusterTemplates.length}
-          stats={[]}
-          onClick={() => navigate('/resources?kind=ClusterWorkflowTemplate')}
-        />
+        {clusterWorkflowTemplatesEnabled && (
+          <KindCard
+            icon={<Globe className="w-5 h-5 text-teal-400" />}
+            title="Cluster Workflow Templates"
+            count={clusterTemplates.length}
+            stats={[]}
+            onClick={() => navigate('/resources?kind=ClusterWorkflowTemplate')}
+          />
+        )}
 
         <KindCard
           icon={<Calendar className="w-5 h-5 text-amber-400" />}

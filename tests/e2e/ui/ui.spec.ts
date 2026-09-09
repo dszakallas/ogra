@@ -586,4 +586,16 @@ test.describe('OGRA UI End-to-End Test Suite', () => {
     const eventsTab = page.getByTestId('tab-events');
     await expect(eventsTab).toBeVisible();
   });
+
+  test('graceful degradation: 403 on cluster workflow templates does not break dashboard', async ({ page }) => {
+    await page.route('**/api/v1/cluster-workflow-templates', (route) =>
+      route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ message: 'Forbidden' }) })
+    );
+
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Workflows/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Cluster Workflow Templates/ })).not.toBeVisible();
+    await expect(page.getByText('Network Error')).not.toBeVisible();
+  });
 });

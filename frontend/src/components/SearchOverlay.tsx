@@ -100,7 +100,7 @@ function parseCompletion(input: string): { mode: CompletionMode; prefix: string;
 
 export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const navigate = useNavigate();
-  const { workflows, templates, clusterTemplates, cronWorkflows, namespaces, isFavorite } = useCluster();
+  const { workflows, templates, clusterTemplates, cronWorkflows, namespaces, isFavorite, clusterWorkflowTemplatesEnabled } = useCluster();
   const [input, setInput] = useState('');
   const [chips, setChips] = useState<Chip[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -137,9 +137,16 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const allResources: SearchResult[] = useMemo(() => [
     ...workflows.map((w) => ({ kind: 'Workflow' as const, namespace: w.metadata.namespace, name: w.metadata.name, phase: w.status?.phase })),
     ...templates.map((t) => ({ kind: 'WorkflowTemplate' as const, namespace: t.metadata.namespace, name: t.metadata.name })),
-    ...clusterTemplates.map((ct) => ({ kind: 'ClusterWorkflowTemplate' as const, namespace: ct.metadata?.namespace, name: ct.metadata?.name || '' })),
+    ...(clusterWorkflowTemplatesEnabled
+      ? clusterTemplates.map((ct) => ({ kind: 'ClusterWorkflowTemplate' as const, namespace: ct.metadata?.namespace, name: ct.metadata?.name || '' }))
+      : []),
     ...cronWorkflows.map((c) => ({ kind: 'CronWorkflow' as const, namespace: c.metadata.namespace, name: c.metadata.name }))
-  ], [workflows, templates, clusterTemplates, cronWorkflows]);
+  ], [workflows, templates, clusterTemplates, cronWorkflows, clusterWorkflowTemplatesEnabled]);
+
+  const availableKinds = useMemo(() => {
+    if (clusterWorkflowTemplatesEnabled) return ALL_KINDS;
+    return ALL_KINDS.filter((k) => k !== 'ClusterWorkflowTemplate');
+  }, [clusterWorkflowTemplatesEnabled]);
 
   const suggestions: string[] = useMemo(() => {
     if (!completionMode) return [];
@@ -149,8 +156,8 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
       return namespaces.filter((ns) => !existing.includes(ns) && ns.toLowerCase().includes(p));
     }
     const existing = chips.filter((c) => c.type === 'kind').map((c) => c.value);
-    return ALL_KINDS.filter((k) => !existing.includes(k) && k.toLowerCase().includes(p));
-  }, [completionMode, completionPrefix, namespaces, chips]);
+    return availableKinds.filter((k) => !existing.includes(k) && k.toLowerCase().includes(p));
+  }, [completionMode, completionPrefix, namespaces, chips, availableKinds]);
 
   useEffect(() => {
     setActiveIdx(0);

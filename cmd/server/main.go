@@ -35,7 +35,15 @@ func main() {
 	apiServerFlag := flag.String("server", "", "Kubernetes API server URL (or $KUBE_API_SERVER)")
 	namespacedFlag := flag.Bool("namespaced", false, "Run in namespaced mode (or $NAMESPACED)")
 	managedNsFlag := flag.String("managed-namespace", "", "Managed namespace(s), comma-separated (or $MANAGED_NAMESPACE)")
+	clusterWfTplFlag := flag.Bool("cluster-workflow-templates", true, "Enable ClusterWorkflowTemplate support (or $CLUSTER_WORKFLOW_TEMPLATES)")
 	flag.Parse()
+
+	var cwtExplicit *bool
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "cluster-workflow-templates" {
+			cwtExplicit = clusterWfTplFlag
+		}
+	})
 
 	port := *portFlag
 	if port == "" || strings.HasPrefix(port, "-") {
@@ -56,10 +64,10 @@ func main() {
 		log.Fatalf("Failed to initialize Kubernetes client: %v", err)
 	}
 
-	serverCfg := config.NewServerConfig(*namespacedFlag, *managedNsFlag)
+	serverCfg := config.NewServerConfig(*namespacedFlag, *managedNsFlag, cwtExplicit)
 
-	log.Printf("Connected to Kubernetes API host=%s (context=%s, namespaced=%t, managed=%v)",
-		clients.Host, clients.ActiveContext, serverCfg.Namespaced, serverCfg.ManagedNamespaces)
+	log.Printf("Connected to Kubernetes API host=%s (context=%s, namespaced=%t, managed=%v, clusterWorkflowTemplates=%t)",
+		clients.Host, clients.ActiveContext, serverCfg.Namespaced, serverCfg.ManagedNamespaces, serverCfg.ClusterWorkflowTemplates)
 
 	infoH := handler.NewInfoHandler(clients.Typed, serverCfg)
 	wfH := handler.NewWorkflowHandler(clients.Dynamic, serverCfg)
