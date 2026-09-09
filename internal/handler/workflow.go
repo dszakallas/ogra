@@ -145,6 +145,10 @@ func (h *WorkflowHandler) SubmitWorkflow(w http.ResponseWriter, r *http.Request,
 	}
 
 	isClusterScope := req.ResourceKind == "ClusterWorkflowTemplate"
+	if isClusterScope && h.serverCfg != nil && !h.serverCfg.ClusterWorkflowTemplates {
+		http.Error(w, "ClusterWorkflowTemplate support is disabled", http.StatusBadRequest)
+		return
+	}
 	wfTplRef := map[string]any{
 		"name": req.ResourceName,
 	}

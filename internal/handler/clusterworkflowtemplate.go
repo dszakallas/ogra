@@ -2,9 +2,11 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/dszakallas/ogra/internal/config"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -39,8 +41,25 @@ func (h *ClusterWorkflowTemplateHandler) ListClusterWorkflowTemplates(w http.Res
 		return
 	}
 
+	if h.serverCfg != nil && !h.serverCfg.ClusterWorkflowTemplates {
+		writeJSON(w, map[string]any{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "ClusterWorkflowTemplateList",
+			"items":      []unstructured.Unstructured{},
+		})
+		return
+	}
+
 	unstructuredList, err := h.dynClient.Resource(clusterWorkflowTemplateResource).List(r.Context(), metav1.ListOptions{})
 	if err != nil {
+		if apierrors.IsForbidden(err) {
+			writeJSON(w, map[string]any{
+				"apiVersion": "argoproj.io/v1alpha1",
+				"kind":       "ClusterWorkflowTemplateList",
+				"items":      []unstructured.Unstructured{},
+			})
+			return
+		}
 		writeError(w, err, http.StatusInternalServerError)
 		return
 	}
@@ -65,8 +84,17 @@ func (h *ClusterWorkflowTemplateHandler) GetClusterWorkflowTemplate(w http.Respo
 		return
 	}
 
+	if h.serverCfg != nil && !h.serverCfg.ClusterWorkflowTemplates {
+		writeError(w, fmt.Errorf("cluster workflow templates are disabled"), http.StatusNotFound)
+		return
+	}
+
 	res, err := h.dynClient.Resource(clusterWorkflowTemplateResource).Get(r.Context(), name, metav1.GetOptions{})
 	if err != nil {
+		if apierrors.IsForbidden(err) {
+			writeError(w, err, http.StatusForbidden)
+			return
+		}
 		writeError(w, err, http.StatusNotFound)
 		return
 	}

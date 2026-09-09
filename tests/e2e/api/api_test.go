@@ -4,6 +4,7 @@ package api
 
 import (
 	"context"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -348,4 +349,45 @@ func TestClusterWorkflowTemplateOperations(t *testing.T) {
 
 	code, _ = env.doRequest("DELETE", "/api/v1/workflows/"+env.namespace+"/"+wfName, nil)
 	require.Equal(t, 200, code)
+}
+
+func TestClusterWorkflowTemplateOptOut(t *testing.T) {
+	clients, err := config.NewKubeClients(config.KubeConfigOptions{})
+	require.NoError(t, err)
+
+	serverCfg := &config.ServerConfig{
+		ClusterWorkflowTemplates: false,
+	}
+	mux := buildMuxWithConfig(clients, serverCfg)
+	server := httptest.NewServer(mux)
+	t.Cleanup(func() { server.Close() })
+
+	env := &apiEnv{
+		baseURL: server.URL,
+		client:  server.Client(),
+	}
+
+	// 1. Info returns clusterWorkflowTemplates: false
+	code, infoResp := env.doRequest("GET", "/api/v1/info", nil)
+	require.Equal(t, 200, code)
+	require.Equal(t, false, infoResp["clusterWorkflowTemplates"])
+
+	// 2. List returns 200 with empty items
+	code, listResp := env.doRequest("GET", "/api/v1/cluster-workflow-templates", nil)
+	require.Equal(t, 200, code)
+	items, ok := listResp["items"].([]any)
+	require.True(t, ok)
+	require.Empty(t, items)
+
+	// 3. Get returns 404
+	code, _ = env.doRequest("GET", "/api/v1/cluster-workflow-templates/cluster-whalesay-template", nil)
+	require.Equal(t, 404, code)
+
+	// 4. Submit returns 400
+	submitPayload := map[string]any{
+		"resourceKind": "ClusterWorkflowTemplate",
+		"resourceName": "cluster-whalesay-template",
+	}
+	code, _ = env.doRequest("POST", "/api/v1/workflows/default/submit", submitPayload)
+	require.Equal(t, 400, code)
 }

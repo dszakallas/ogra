@@ -123,6 +123,9 @@ func (h *EventsHandler) StreamEvents(w http.ResponseWriter, r *http.Request, ns 
 
 		for _, target := range watchResources {
 			if target.clusterScoped {
+				if h.serverCfg != nil && !h.serverCfg.ClusterWorkflowTemplates {
+					continue
+				}
 				watcher, err := h.dynClient.Resource(target.gvr).Watch(ctx, metav1.ListOptions{})
 				if err == nil {
 					spawnWatcher(watcher, target.kind)

@@ -24,8 +24,9 @@ func NewInfoHandler(kubeClient kubernetes.Interface, serverCfg *config.ServerCon
 
 // InfoResponse matches ServerInfo expected by frontend.
 type InfoResponse struct {
-	ManagedNamespaces []string `json:"managedNamespaces"`
-	Links             []any    `json:"links"`
+	ManagedNamespaces        []string `json:"managedNamespaces"`
+	Links                    []any    `json:"links"`
+	ClusterWorkflowTemplates bool     `json:"clusterWorkflowTemplates"`
 }
 
 // VersionResponse matches version info expected by frontend.
@@ -70,9 +71,15 @@ func (h *InfoHandler) GetInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	cwtEnabled := true
+	if h.serverCfg != nil {
+		cwtEnabled = h.serverCfg.ClusterWorkflowTemplates
+	}
+
 	writeJSON(w, InfoResponse{
-		ManagedNamespaces: namespaces,
-		Links:             []any{},
+		ManagedNamespaces:        namespaces,
+		Links:                    []any{},
+		ClusterWorkflowTemplates: cwtEnabled,
 	})
 }
 
