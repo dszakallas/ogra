@@ -91,6 +91,11 @@
         // pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
           dockerImage = dockerImage;
         };
+
+        dockerImages = pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+          default = dockerImage;
+          ogra = dockerImage;
+        };
       }
     );
 }
