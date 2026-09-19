@@ -65,8 +65,8 @@ function AppContent() {
     <div className="flex flex-col min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
       <header className="sticky top-0 z-30 bg-zinc-950/85 border-b border-zinc-800/80 backdrop-blur-md px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 w-9 h-9 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.3)]">
-            <Layers className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-[0_0_15px_rgba(255,105,180,0.3)]">
+            <img src="/logo-dark.svg" alt="ogra" className="w-full h-full" />
           </div>
           <div>
             <h1 className="text-base font-black tracking-widest font-display text-zinc-100 lowercase leading-none">
