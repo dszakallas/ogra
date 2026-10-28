@@ -134,7 +134,7 @@ export function CronWorkflowDetail({
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4">
         {/* Schedule Display */}
         <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-2">
           <span className="section-title">

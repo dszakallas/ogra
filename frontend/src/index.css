@@ -48,12 +48,12 @@
 
 /* Detail page layout */
 .detail-page {
-  @apply flex flex-col min-h-screen pb-16 bg-zinc-950 text-white max-w-2xl mx-auto w-full border-x border-zinc-900/40;
+  @apply flex flex-col min-h-screen pb-16 bg-zinc-950 text-white max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px] mx-auto w-full border-x border-zinc-900/40;
 }
 
 /* Sticky header for detail pages */
 .detail-header {
-  @apply sticky top-0 z-20 flex items-center justify-between p-3 bg-zinc-950/90 border-b border-zinc-800/80 backdrop-blur-md;
+  @apply sticky top-0 z-20 flex items-center justify-between p-3 sm:px-6 bg-zinc-950/90 border-b border-zinc-800/80 backdrop-blur-md;
 }
 
 /* Section headers */

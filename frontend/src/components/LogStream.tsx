@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Play, Pause, Download, Trash2, ArrowDown, Search, Copy, Check } from 'lucide-react';
+import { Play, Pause, Download, Trash2, ArrowDown, Search, Copy, Check, WrapText } from 'lucide-react';
 
 interface LogLine {
   id: string;
@@ -22,9 +22,19 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
   const [autoScroll, setAutoScroll] = useState(true);
   const [copiedAll, setCopiedAll] = useState(false);
   const [copiedLineId, setCopiedLineId] = useState<string | null>(null);
-
+  const [wrapLines, setWrapLines] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const seenKeysRef = useRef<Set<string>>(new Set());
+
+  // Helper to match pod name with node ID or filter
+  const matchesPod = (podName: string, filter: string) => {
+    if (!filter) return true;
+    if (podName === filter) return true;
+    const filterSuffix = filter.split('-').pop();
+    if (filterSuffix && podName.endsWith(filterSuffix)) return true;
+    return podName.includes(filter) || filter.includes(podName);
+  };
 
   // Sync state filter with prop
   useEffect(() => {
@@ -43,26 +53,57 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
       return;
     }
 
-    setLogs([]); // Reset or preserve? Reset matches fresh stream connection
-
     const url = `/api/v1/workflows/${namespace}/${workflowName}/log`;
     const eventSource = new EventSource(url);
     eventSourceRef.current = eventSource;
+
+    const handleDone = () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+
+    eventSource.addEventListener('done', handleDone);
 
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         if (data.result) {
+          if (data.result.done) {
+            handleDone();
+            return;
+          }
+
           const { content, podName } = data.result;
+          const rawContent = content || '';
+          const linePod = podName || 'unknown';
+          const lineKey = `${linePod}:${rawContent}`;
+
+          if (seenKeysRef.current.has(lineKey)) {
+            return;
+          }
+          seenKeysRef.current.add(lineKey);
+
+          let lineTimestamp = new Date().toLocaleTimeString();
+          let displayContent = rawContent;
+          const tsMatch = rawContent.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\s?(.*)$/);
+          if (tsMatch) {
+            const parsedDate = new Date(tsMatch[1]);
+            if (!isNaN(parsedDate.getTime())) {
+              lineTimestamp = parsedDate.toLocaleTimeString();
+              displayContent = tsMatch[2];
+            }
+          }
+
           const newLine: LogLine = {
             id: Math.random().toString(36).substring(2, 9),
-            content: content || '',
-            podName: podName || 'unknown',
-            timestamp: new Date().toLocaleTimeString()
+            content: displayContent,
+            podName: linePod,
+            timestamp: lineTimestamp
           };
 
           setLogs((prev) => {
-            // Cap at 1000 lines for mobile memory conservation
             const updated = [...prev, newLine];
             if (updated.length > 1000) {
               return updated.slice(updated.length - 1000);
@@ -80,8 +121,12 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
     };
 
     return () => {
+      eventSource.removeEventListener('done', handleDone);
       if (eventSource.readyState !== 2) {
         eventSource.close();
+      }
+      if (eventSourceRef.current === eventSource) {
+        eventSourceRef.current = null;
       }
     };
   }, [namespace, workflowName, isPaused]);
@@ -105,11 +150,21 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
   // Extract unique Pod Names
   const podsList = Array.from(new Set(logs.map((l) => l.podName))).filter(Boolean);
 
+  // Synchronize selectedPod to actual pod name from podsList if it was set via node ID
+  useEffect(() => {
+    if (selectedPod && podsList.length > 0 && !podsList.includes(selectedPod)) {
+      const matched = podsList.find((p) => matchesPod(p, selectedPod));
+      if (matched) {
+        setSelectedPod(matched);
+      }
+    }
+  }, [podsList, selectedPod]);
+
   // Filtered log display
   const filteredLogs = logs.filter((log) => {
-    const matchesPod = !selectedPod || log.podName === selectedPod;
+    const matches = matchesPod(log.podName, selectedPod);
     const matchesSearch = !searchQuery || log.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesPod && matchesSearch;
+    return matches && matchesSearch;
   });
 
   // Copy all visible logs to clipboard
@@ -150,7 +205,7 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
       style = 'text-emerald-400 font-medium';
     } else if (text.includes('[WARN]') || text.includes('[WARNING]')) {
       style = 'text-amber-400';
-    } else if (text.includes('[ERROR]') || text.includes('[FATAL]')) {
+    } else if (text.includes('[ERROR]') || text.includes('[FATAL]') || text.includes('Error') || text.includes('Traceback')) {
       style = 'text-rose-400 font-semibold';
     } else if (text.includes('[DEBUG]')) {
       style = 'text-purple-400';
@@ -162,14 +217,14 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
   return (
     <div className="flex flex-col h-full bg-zinc-950 rounded-xl border border-zinc-800/80 overflow-hidden shadow-inner">
       {/* Control Bar */}
-      <div className="flex flex-col gap-2 p-3 bg-zinc-950/80 border-b border-zinc-800/80">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 p-3 bg-zinc-950/80 border-b border-zinc-800/80">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           {/* Pod selector */}
-          <div className="flex-1 min-w-[120px]">
+          <div className="w-44 sm:w-56 shrink-0">
             <select
               value={selectedPod}
               onChange={(e) => setSelectedPod(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 font-mono transition-colors"
             >
               <option value="">All pods</option>
               {podsList.map((pod) => (
@@ -180,55 +235,79 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
             </select>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setIsPaused(!isPaused)}
-              className={`p-1.5 rounded text-zinc-400 hover:text-zinc-200 transition-colors ${
-                isPaused ? 'bg-amber-950/40 text-amber-500 hover:text-amber-400' : 'hover:bg-zinc-900'
-              }`}
-              title={isPaused ? 'Resume logs stream' : 'Pause logs stream'}
-            >
-              {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={handleCopyLogs}
-              disabled={filteredLogs.length === 0}
-              className="p-1.5 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-              title="Copy visible logs to clipboard"
-            >
-              {copiedAll ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={handleDownload}
-              disabled={filteredLogs.length === 0}
-              className="p-1.5 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-              title="Download Logs"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setLogs([])}
-              className="p-1.5 rounded text-zinc-400 hover:text-red-400 hover:bg-zinc-900 transition-colors"
-              title="Clear Terminal View"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[140px] max-w-md">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 text-zinc-500 pointer-events-none">
+              <Search className="w-3.5 h-3.5" />
+            </span>
+            <input
+              type="text"
+              placeholder="Search within logs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-800 rounded pl-8 pr-3 py-1.5 text-xs text-zinc-300 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            />
           </div>
         </div>
 
-        {/* Search Input */}
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-zinc-500">
-            <Search className="w-3.5 h-3.5" />
+        {/* Action buttons */}
+        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+          <span className="hidden md:inline-block text-[10px] font-mono text-zinc-500 px-2 py-1 bg-zinc-900 rounded border border-zinc-800/80 mr-1 select-none">
+            {filteredLogs.length} lines
           </span>
-          <input
-            type="text"
-            placeholder="Search within logs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded pl-7 pr-3 py-1 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
-          />
+
+          <button
+            onClick={() => setWrapLines(!wrapLines)}
+            className={`p-1.5 rounded transition-colors ${
+              wrapLines
+                ? 'bg-indigo-950/40 text-indigo-400 border border-indigo-900/40'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent'
+            }`}
+            title={wrapLines ? 'Disable line wrap (use horizontal scrolling)' : 'Enable line wrap'}
+          >
+            <WrapText className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => setIsPaused(!isPaused)}
+            className={`p-1.5 rounded transition-colors ${
+              isPaused
+                ? 'bg-amber-950/40 text-amber-500 hover:text-amber-400 border border-amber-900/40'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent'
+            }`}
+            title={isPaused ? 'Resume logs stream' : 'Pause logs stream'}
+          >
+            {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+          </button>
+
+          <button
+            onClick={handleCopyLogs}
+            disabled={filteredLogs.length === 0}
+            className="p-1.5 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 disabled:opacity-30 disabled:pointer-events-none transition-colors border border-transparent"
+            title="Copy visible logs to clipboard"
+          >
+            {copiedAll ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          </button>
+
+          <button
+            onClick={handleDownload}
+            disabled={filteredLogs.length === 0}
+            className="p-1.5 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 disabled:opacity-30 disabled:pointer-events-none transition-colors border border-transparent"
+            title="Download Logs"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => {
+              seenKeysRef.current.clear();
+              setLogs([]);
+            }}
+            className="p-1.5 rounded text-zinc-400 hover:text-rose-400 hover:bg-zinc-900 transition-colors border border-transparent"
+            title="Clear Terminal View"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -236,7 +315,7 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 p-4 overflow-y-auto font-mono text-[11px] leading-relaxed select-text scrollbar-thin scrollbar-thumb-zinc-800"
+        className="flex-1 p-3 sm:p-4 overflow-y-auto overflow-x-auto font-mono text-[11px] leading-relaxed select-text scrollbar-thin scrollbar-thumb-zinc-800"
       >
         {filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-center gap-1.5 font-sans">
@@ -248,22 +327,42 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
             </span>
           </div>
         ) : (
-          <div className="space-y-1">
-            {filteredLogs.map((log) => (
-              <div key={log.id} className="flex items-start justify-between gap-2 hover:bg-zinc-900/60 py-0.5 rounded px-1 group">
-                <div className="flex items-start gap-2 min-w-0 flex-1">
-                  <span className="text-zinc-600 shrink-0 select-none text-[10px]">{log.timestamp}</span>
-                  <span className="text-blue-500/80 shrink-0 select-none font-semibold text-[10px] bg-blue-950/20 px-1 border border-blue-900/20 rounded">
+          <div className="space-y-0.5 min-w-full">
+            {filteredLogs.map((log, index) => (
+              <div
+                key={log.id}
+                className="flex items-start justify-between gap-3 hover:bg-zinc-900/60 py-0.5 rounded px-2 group transition-colors"
+              >
+                <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                  <span className="text-zinc-600 shrink-0 select-none text-[10px] w-7 text-right font-mono">
+                    {index + 1}
+                  </span>
+                  <span className="text-zinc-500 shrink-0 select-none text-[10px]">
+                    {log.timestamp}
+                  </span>
+                  <span className="text-blue-400 shrink-0 select-none font-semibold text-[10px] bg-blue-950/30 px-1.5 py-0.5 border border-blue-900/30 rounded">
                     {log.podName.split('-').slice(-1)[0] || log.podName}
                   </span>
-                  <span className="break-all whitespace-pre-wrap">{highlightLogLine(log.content)}</span>
+                  <span
+                    className={`font-mono text-zinc-300 ${
+                      wrapLines
+                        ? 'whitespace-pre-wrap break-words'
+                        : 'whitespace-pre overflow-visible'
+                    }`}
+                  >
+                    {highlightLogLine(log.content)}
+                  </span>
                 </div>
                 <button
                   onClick={() => handleCopyLine(log)}
                   className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 transition-opacity shrink-0"
                   title="Copy log line"
                 >
-                  {copiedLineId === log.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  {copiedLineId === log.id ? (
+                    <Check className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
                 </button>
               </div>
             ))}
@@ -275,7 +374,7 @@ export function LogStream({ namespace, workflowName, activePodId = '' }: LogStre
       {!autoScroll && filteredLogs.length > 0 && (
         <button
           onClick={() => setAutoScroll(true)}
-          className="absolute bottom-4 right-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full p-2 shadow-lg flex items-center gap-1 text-xs font-sans transition-all scale-100 hover:scale-105"
+          className="absolute bottom-4 right-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full p-2 shadow-lg flex items-center gap-1 text-xs font-sans transition-all scale-100 hover:scale-105"
         >
           <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
           <span>Scroll Live</span>
