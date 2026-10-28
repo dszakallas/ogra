@@ -1,10 +1,10 @@
 {
   pkgs,
   lib,
-  config,
   inputs,
   ...
 }:
+{ config, ... }:
 {
   env.KUBECONFIG = "${config.devenv.root}/.kube/kind-config.yaml";
 
@@ -60,7 +60,88 @@
         kubectl apply -f "${config.devenv.root}/k8s/examples/cron-workflow-backup.yaml"
       '';
       after = [ "kind:argo-install" ];
-      before = [ "devenv:enterShell" ];
+      before = [
+        "devenv:enterShell"
+        "devenv:processes:backend"
+      ];
     };
+
+    "api-test:run" = {
+      exec = ''
+        api-test -p "${toString config.processes.backend.ports.http.value}"
+      '';
+      after = [ "devenv:processes:backend" ];
+    };
+
+    "ui-test:run" = {
+      exec = ''
+        ui-test -p "${toString config.processes.frontend.ports.http.value}"
+      '';
+      after = [
+        "devenv:processes:backend"
+        "devenv:processes:frontend"
+      ];
+    };
+  };
+
+  processes.backend = {
+    exec = "backend";
+    cwd = ".";
+    ports.http.allocate = 8080;
+    env = {
+      PORT = "${toString config.processes.backend.ports.http.value}";
+    };
+  };
+
+  processes.frontend = {
+    exec = "frontend";
+    cwd = ".";
+    ports.http.allocate = 3000;
+    env = {
+      PORT = "${toString config.processes.frontend.ports.http.value}";
+      VITE_BACKEND_PORT = "${toString config.processes.backend.ports.http.value}";
+    };
+  };
+
+  scripts.testbed = {
+    exec = ''
+      cd "${config.devenv.root}"
+      exec go run ./tests/e2e/testbed "$@"
+    '';
+    description = "Manage Kubernetes E2E test environments and fixtures";
+  };
+
+  scripts.ui-test = {
+    exec = ''
+      cd "${config.devenv.root}/frontend"
+      PORT="${toString config.processes.frontend.ports.http.value}"
+      while getopts "p:" opt; do
+        case "$opt" in
+          p) PORT="$OPTARG" ;;
+          *) echo "Usage: ui-test [-p port] [playwright args...]" >&2; exit 1 ;;
+        esac
+      done
+      shift $((OPTIND-1))
+      export UI_BASE_URL="http://localhost:$PORT"
+      exec playwright test "$@"
+    '';
+    description = "Run Playwright E2E user interface tests";
+  };
+
+  scripts.api-test = {
+    exec = ''
+      cd "${config.devenv.root}"
+      PORT="${toString config.processes.backend.ports.http.value}"
+      while getopts "p:" opt; do
+        case "$opt" in
+          p) PORT="$OPTARG" ;;
+          *) echo "Usage: api-test [-p port] [go test args...]" >&2; exit 1 ;;
+        esac
+      done
+      shift $((OPTIND-1))
+      export TEST_BACKEND_PORT="$PORT"
+      exec go test -tags e2e ./tests/e2e/api/ -v "$@"
+    '';
+    description = "Run Go E2E API tests manually";
   };
 }
