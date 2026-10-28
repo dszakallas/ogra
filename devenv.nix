@@ -21,6 +21,7 @@
     pkgs.gofumpt
     pkgs.nodejs_24
     pkgs.playwright-driver
+    pkgs.playwright-test
     pkgs.kustomize
     inputs.kustomize-plugins.packages.${pkgs.stdenv.system}.default
     (pkgs.python3.withPackages (ps: [ ps.pyyaml ]))
@@ -93,6 +94,7 @@
 
   enterShell = ''
     export NODE_PATH="${config.devenv.root}/frontend/node_modules:$NODE_PATH"
+    export PATH="${config.devenv.root}/frontend/node_modules/.bin:$PATH"
     CHROMIUM_BIN="$(find -L "${pkgs.playwright-driver.browsers}" -name chrome-headless-shell -type f -print -quit)"
     export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH="$CHROMIUM_BIN"
     export PLAYWRIGHT_LAUNCH_OPTIONS_EXECUTABLE_PATH="$CHROMIUM_BIN"
@@ -144,15 +146,27 @@
     exec = ''
       cd "${config.devenv.root}/frontend"
       PORT="${toString config.processes.frontend.ports.http.value}"
-      while getopts "p:" opt; do
-        case "$opt" in
-          p) PORT="$OPTARG" ;;
-          *) echo "Usage: ui-test [-p port] [playwright args...]" >&2; exit 1 ;;
+      args=()
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          -p)
+            PORT="$2"
+            shift 2
+            ;;
+          *)
+            args+=("$1")
+            shift
+            ;;
         esac
       done
-      shift $((OPTIND-1))
       export UI_BASE_URL="http://localhost:$PORT"
-      exec playwright test "$@"
+      if [ -z "''${PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH:-}" ]; then
+        CHROMIUM_BIN="$(find -L "${pkgs.playwright-driver.browsers}" -name chrome-headless-shell -type f -print -quit)"
+        export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH="$CHROMIUM_BIN"
+        export PLAYWRIGHT_LAUNCH_OPTIONS_EXECUTABLE_PATH="$CHROMIUM_BIN"
+      fi
+      export PATH="${config.devenv.root}/frontend/node_modules/.bin:$PATH"
+      exec playwright test "''${args[@]}"
     '';
     description = "Run Playwright E2E user interface tests";
   };
@@ -168,15 +182,21 @@
     exec = ''
       cd "${config.devenv.root}"
       PORT="${toString config.processes.backend.ports.http.value}"
-      while getopts "p:" opt; do
-        case "$opt" in
-          p) PORT="$OPTARG" ;;
-          *) echo "Usage: api-test [-p port] [go test args...]" >&2; exit 1 ;;
+      args=()
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          -p)
+            PORT="$2"
+            shift 2
+            ;;
+          *)
+            args+=("$1")
+            shift
+            ;;
         esac
       done
-      shift $((OPTIND-1))
       export TEST_BACKEND_PORT="$PORT"
-      exec go test -tags e2e ./tests/e2e/api/ -v "$@"
+      exec go test -tags e2e ./tests/e2e/api/ -v "''${args[@]}"
     '';
     description = "Run Go E2E API tests manually";
   };
