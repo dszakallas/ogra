@@ -3,5 +3,5 @@ kind: Kustomization
 
 namespace: argo
 
-resources:
-  - install.yaml
+generators:
+  - argo-workflows.yaml

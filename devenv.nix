@@ -21,6 +21,8 @@
     pkgs.gofumpt
     pkgs.nodejs_24
     pkgs.playwright-driver
+    pkgs.kustomize
+    (pkgs.callPackage ./devenv/pkgs/kustomize-plugins.nix { })
     (pkgs.python3.withPackages (ps: [ ps.pyyaml ]))
   ];
 
@@ -33,6 +35,15 @@
   git-hooks.hooks = {
     golangci-lint.enable = true;
     gofmt.enable = true;
+
+    # Vendor Kustomization
+    vendor-kustomization = {
+      enable = true;
+      name = "Vendor Kustomization";
+      entry = "bash -c 'for file in \"$@\"; do if [ -f \"$file\" ] && grep -q \"kind: VendorKustomization\" \"$file\" 2>/dev/null; then dir=$(dirname \"$file\"); base=$(basename \"$file\"); (cd \"$dir\" && kustomize-plugin-vendorkustomization \"$base\" > /dev/null); fi; done' --";
+      files = "(^|/)releases/argo-workflows/.*\\.ya?ml$";
+      pass_filenames = true;
+    };
 
     # TypeScript typechecking
     tsc = {
