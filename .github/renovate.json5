@@ -16,12 +16,28 @@
   },
   npm: {
     enabled: true,
-    fileMatch: ["(^|/)package\\.json$"],
+    managerFilePatterns: ["/(^|/)package\\.json$/"],
   },
   gomod: {
     enabled: true,
   },
+  customManagers: [
+    {
+      customType: "regex",
+      description: "Update vendored manifests version in VendorKustomization files",
+      managerFilePatterns: ["/(^|/)k8s(/.+)?/[^/]+\\.ya?ml$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)(?: versioning=(?<versioning>[^\\s]+))?\\n\\s*version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?",
+      ],
+    },
+  ],
   packageRules: [
+    {
+      description: "Do not update container images inside upstream vendored manifests",
+      matchFileNames: ["**/*.vendored.yaml", "**/vendor/**"],
+      matchManagers: ["kubernetes"],
+      enabled: false,
+    },
     {
       description: ["Auto-merge patch updates"],
       automerge: true,
@@ -51,6 +67,29 @@
       matchManagers: ["nix"],
       semanticCommitScope: "nix",
       addLabels: ["dep/source:nix"],
+    },
+    {
+      matchDatasources: ["github-releases"],
+      matchUpdateTypes: ["major"],
+      commitMessagePrefix: "feat(vendor)!: ",
+      commitMessageTopic: "{{depName}}",
+      commitMessageExtra: "( {{currentVersion}} → {{newVersion}} )",
+    },
+    {
+      matchDatasources: ["github-releases"],
+      matchUpdateTypes: ["minor"],
+      semanticCommitType: "feat",
+      semanticCommitScope: "vendor",
+      commitMessageTopic: "{{depName}}",
+      commitMessageExtra: "( {{currentVersion}} → {{newVersion}} )",
+    },
+    {
+      matchDatasources: ["github-releases"],
+      matchUpdateTypes: ["patch"],
+      semanticCommitType: "fix",
+      semanticCommitScope: "vendor",
+      commitMessageTopic: "{{depName}}",
+      commitMessageExtra: "( {{currentVersion}} → {{newVersion}} )",
     },
   ],
 }
