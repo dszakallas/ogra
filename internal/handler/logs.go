@@ -43,6 +43,22 @@ func (h *LogsHandler) StreamWorkflowLogs(w http.ResponseWriter, r *http.Request,
 		if err == nil && len(pods.Items) > 0 {
 			podName = pods.Items[0].Name
 		}
+	} else {
+		_, err := h.kubeClient.CoreV1().Pods(ns).Get(ctx, podName, metav1.GetOptions{})
+		if err != nil {
+			labelSelector := fmt.Sprintf("workflows.argoproj.io/workflow=%s", name)
+			pods, listErr := h.kubeClient.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+			if listErr == nil {
+				for _, p := range pods.Items {
+					if p.Annotations["workflows.argoproj.io/node-id"] == podName ||
+						p.Annotations["workflows.argoproj.io/node-name"] == podName ||
+						strings.Contains(p.Name, podName) {
+						podName = p.Name
+						break
+					}
+				}
+			}
+		}
 	}
 
 	if podName == "" {
@@ -85,8 +101,15 @@ func (h *LogsHandler) StreamWorkflowLogs(w http.ResponseWriter, r *http.Request,
 			_ = sse.Send("message", payload)
 		}
 		if err != nil {
-			if err != io.EOF {
-				_ = fmt.Sprintf("Log stream error: %v", err)
+			if err == io.EOF {
+				donePayload := map[string]any{
+					"result": map[string]any{
+						"podName": podName,
+						"done":    true,
+					},
+				}
+				_ = sse.Send("message", donePayload)
+				_ = sse.Send("done", donePayload)
 			}
 			return
 		}

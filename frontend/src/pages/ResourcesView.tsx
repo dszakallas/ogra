@@ -67,7 +67,7 @@ export function ResourcesView() {
   ];
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full px-4 pb-20">
+    <div className="flex flex-col gap-6 max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 pb-20">
       <div className="flex items-center justify-between mt-4">
         <h1 className="text-xl font-bold tracking-tight text-zinc-100 font-display flex items-center gap-2">
           <Layers className="w-5 h-5 text-indigo-400" />
@@ -75,7 +75,7 @@ export function ResourcesView() {
         </h1>
       </div>
 
-      <div className="flex border border-zinc-800/80 bg-zinc-900 p-1.5 rounded-2xl select-none shadow-sm">
+      <div className="flex border border-zinc-800/80 bg-zinc-900 p-1.5 rounded-2xl select-none shadow-sm sm:w-fit sm:min-w-[420px]">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -95,9 +95,11 @@ export function ResourcesView() {
       </div>
 
       {activeTab === 'resources' && (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
           {allResources.length === 0 ? (
-            <EmptyState message="No resources found" />
+            <div className="col-span-full">
+              <EmptyState message="No resources found" />
+            </div>
           ) : (
             allResources.map(({ kind, resource }) => (
               <ResourceCard key={`${kind}/${resource.metadata.uid}`} kind={kind} resource={resource} />
@@ -107,9 +109,11 @@ export function ResourcesView() {
       )}
 
       {activeTab === 'favorites' && (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
           {favoritedResources.length === 0 ? (
-            <EmptyState message="No favorites yet" hint="Star any resource to add it here. Favorites are saved in your browser." />
+            <div className="col-span-full">
+              <EmptyState message="No favorites yet" hint="Star any resource to add it here. Favorites are saved in your browser." />
+            </div>
           ) : (
             favoritedResources.map(({ kind, resource }) => (
               <ResourceCard key={`${kind}/${resource.metadata.uid}`} kind={kind} resource={resource} />

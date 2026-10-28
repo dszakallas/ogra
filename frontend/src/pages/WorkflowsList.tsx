@@ -50,7 +50,7 @@ export function WorkflowsList({
 
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full px-4 pb-20">
+    <div className="flex flex-col gap-6 max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 pb-20">
       {/* Header Panel */}
       <div className="flex items-center justify-between mt-4">
         <h1 className="text-xl font-bold tracking-tight text-zinc-100 font-display flex items-center gap-2">

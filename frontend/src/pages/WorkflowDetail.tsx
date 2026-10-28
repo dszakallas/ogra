@@ -247,7 +247,7 @@ export function WorkflowDetail({
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4">
         {/* State banner */}
         <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-3 font-mono text-xs shadow-md">
           <div className="flex items-center justify-between gap-4">
@@ -291,7 +291,7 @@ export function WorkflowDetail({
             {isRunning && (
               <button
                 onClick={() => onSuspend(namespace!, name!)}
-                className="flex-1 min-w-[120px] bg-amber-950/20 border border-amber-900/30 text-amber-400 hover:bg-amber-950/40 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                className="flex-1 sm:flex-initial sm:px-6 min-w-[120px] bg-amber-950/20 border border-amber-900/30 text-amber-400 hover:bg-amber-950/40 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
               >
                 <Pause className="w-4 h-4" />
                 <span>Suspend</span>
@@ -300,7 +300,7 @@ export function WorkflowDetail({
             {isSuspended && (
               <button
                 onClick={() => onResume(namespace!, name!)}
-                className="flex-1 min-w-[120px] bg-emerald-950/20 border border-emerald-900/30 text-emerald-400 hover:bg-emerald-950/40 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                className="flex-1 sm:flex-initial sm:px-6 min-w-[120px] bg-emerald-950/20 border border-emerald-900/30 text-emerald-400 hover:bg-emerald-950/40 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
               >
                 <Play className="w-4 h-4" />
                 <span>Resume</span>
@@ -309,7 +309,7 @@ export function WorkflowDetail({
             {isRunning && (
               <button
                 onClick={() => onStop(namespace!, name!)}
-                className="flex-1 min-w-[120px] bg-rose-950/20 border border-rose-900/30 text-rose-400 hover:bg-rose-950/40 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                className="flex-1 sm:flex-initial sm:px-6 min-w-[120px] bg-rose-950/20 border border-rose-900/30 text-rose-400 hover:bg-rose-950/40 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
               >
                 <StopCircle className="w-4 h-4" />
                 <span>Stop</span>
@@ -318,7 +318,7 @@ export function WorkflowDetail({
             {isRunning && (
               <button
                 onClick={() => onTerminate(namespace!, name!)}
-                className="flex-1 min-w-[120px] bg-rose-950/30 border border-rose-900/40 text-rose-500 hover:bg-rose-950/50 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                className="flex-1 sm:flex-initial sm:px-6 min-w-[120px] bg-rose-950/30 border border-rose-900/40 text-rose-500 hover:bg-rose-950/50 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
               >
                 <XCircle className="w-4 h-4" />
                 <span>Terminate</span>
@@ -327,7 +327,7 @@ export function WorkflowDetail({
             {!isRunning && !isSuspended && (
               <button
                 onClick={() => onRetry(namespace!, name!)}
-                className="flex-1 min-w-[120px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                className="flex-1 sm:flex-initial sm:px-8 min-w-[140px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Retry</span>
@@ -338,7 +338,7 @@ export function WorkflowDetail({
       </div>
 
       {/* Tab navigation bar */}
-      <div className="tab-bar mx-4 mb-4">
+      <div className="tab-bar mx-4 sm:mx-6 mb-4 sm:w-fit sm:min-w-[480px]">
         {(['SUMMARY', 'NODES', 'TIMELINE', 'LOGS'] as TabType[]).map((tab) => (
           <button
             key={tab}
@@ -354,95 +354,99 @@ export function WorkflowDetail({
       </div>
 
       {/* Main Tab Contents */}
-      <div className="flex-1 px-4 overflow-hidden">
+      <div className="flex-1 px-4 sm:px-6 overflow-hidden">
         {/* SUMMARY TAB */}
         {activeTab === 'SUMMARY' && (
-          <div className="space-y-5 pb-8">
-            <div className="space-y-2">
-              <h3 className="section-title">
-                SUBMISSION PARAMETERS
-              </h3>
-              {workflowParams.length === 0 ? (
-                <div className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-center shadow-sm">
-                  No parameters were specified for this execution.
-                </div>
-              ) : (
-                <div className="bg-zinc-950 border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden shadow-md">
-                  {workflowParams.map((p) => (
-                    <div key={p.name} className="p-3.5 flex flex-col gap-1.5 text-xs">
-                      <span className="font-mono text-[10px] font-bold text-zinc-400">
-                        {p.name}
-                      </span>
-                      <code className="text-zinc-300 bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800/80 break-all leading-relaxed font-mono text-[11px] select-text cursor-text">
-                        {p.value || '""'}
-                      </code>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="section-title">
-                NODE STATS (PODS: {podNodes.length})
-              </h3>
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                <div className="stat-card shadow-sm">
-                  <span className="text-emerald-500 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Succeeded</span>
-                  <span className="font-bold text-zinc-300">{nodeStats.Succeeded}</span>
-                </div>
-                <div className="stat-card shadow-sm">
-                  <span className="text-indigo-400 font-bold flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Running</span>
-                  <span className="font-bold text-zinc-300">{nodeStats.Running}</span>
-                </div>
-                <div className="stat-card shadow-sm">
-                  <span className="text-amber-500 font-bold flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Pending</span>
-                  <span className="font-bold text-zinc-300">{nodeStats.Pending}</span>
-                </div>
-                <div className="stat-card shadow-sm">
-                  <span className="text-rose-400 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" />Failed</span>
-                  <span className="font-bold text-zinc-300">{nodeStats.Failed + nodeStats.Error}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="section-title">
-                METADATA DETAILS
-              </h3>
-                <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-3.5 font-mono text-[11px] text-zinc-400 shadow-md select-text">
-                <div className="flex justify-between gap-4">
-                  <span>UID:</span>
-                  <span className="meta-value truncate max-w-[200px] text-right">{workflow.metadata.uid}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span>RESOURCE VERSION:</span>
-                  <span className="meta-value">{workflow.metadata.resourceVersion}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span>CREATED AT:</span>
-                  <span className="meta-value">
-                    {new Date(workflow.metadata.creationTimestamp).toLocaleString()}
-                  </span>
-                </div>
-                {workflow.spec?.workflowTemplateRef?.name && (
-                  <div className="flex justify-between items-center gap-4 border-t border-zinc-900/60 pt-2.5">
-                    <span>SOURCE TEMPLATE:</span>
-                    <button
-                      onClick={() => {
-                        if (workflow.spec?.workflowTemplateRef?.clusterScope) {
-                          navigate(`/cluster-templates/${workflow.spec.workflowTemplateRef.name}`);
-                        } else {
-                          navigate(`/templates/${namespace}/${workflow.spec!.workflowTemplateRef!.name}`);
-                        }
-                      }}
-                      className="text-indigo-400 hover:text-indigo-300 font-bold underline flex items-center gap-1"
-                    >
-                      <span>{workflow.spec.workflowTemplateRef?.name}</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </button>
+          <div className="space-y-6 pb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              <div className="space-y-2">
+                <h3 className="section-title">
+                  SUBMISSION PARAMETERS
+                </h3>
+                {workflowParams.length === 0 ? (
+                  <div className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-center shadow-sm">
+                    No parameters were specified for this execution.
+                  </div>
+                ) : (
+                  <div className="bg-zinc-950 border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden shadow-md">
+                    {workflowParams.map((p) => (
+                      <div key={p.name} className="p-3.5 flex flex-col gap-1.5 text-xs">
+                        <span className="font-mono text-[10px] font-bold text-zinc-400">
+                          {p.name}
+                        </span>
+                        <code className="text-zinc-300 bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800/80 break-all leading-relaxed font-mono text-[11px] select-text cursor-text">
+                          {p.value || '""'}
+                        </code>
+                      </div>
+                    ))}
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="section-title">
+                    NODE STATS (PODS: {podNodes.length})
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-2 text-[11px] font-mono">
+                    <div className="stat-card shadow-sm">
+                      <span className="text-emerald-500 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Succeeded</span>
+                      <span className="font-bold text-zinc-300">{nodeStats.Succeeded}</span>
+                    </div>
+                    <div className="stat-card shadow-sm">
+                      <span className="text-indigo-400 font-bold flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Running</span>
+                      <span className="font-bold text-zinc-300">{nodeStats.Running}</span>
+                    </div>
+                    <div className="stat-card shadow-sm">
+                      <span className="text-amber-500 font-bold flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Pending</span>
+                      <span className="font-bold text-zinc-300">{nodeStats.Pending}</span>
+                    </div>
+                    <div className="stat-card shadow-sm">
+                      <span className="text-rose-400 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" />Failed</span>
+                      <span className="font-bold text-zinc-300">{nodeStats.Failed + nodeStats.Error}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="section-title">
+                    METADATA DETAILS
+                  </h3>
+                  <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-4 space-y-3.5 font-mono text-[11px] text-zinc-400 shadow-md select-text">
+                    <div className="flex justify-between gap-4">
+                      <span>UID:</span>
+                      <span className="meta-value truncate max-w-[200px] sm:max-w-none text-right">{workflow.metadata.uid}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span>RESOURCE VERSION:</span>
+                      <span className="meta-value">{workflow.metadata.resourceVersion}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span>CREATED AT:</span>
+                      <span className="meta-value">
+                        {new Date(workflow.metadata.creationTimestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    {workflow.spec?.workflowTemplateRef?.name && (
+                      <div className="flex justify-between items-center gap-4 border-t border-zinc-900/60 pt-2.5">
+                        <span>SOURCE TEMPLATE:</span>
+                        <button
+                          onClick={() => {
+                            if (workflow.spec?.workflowTemplateRef?.clusterScope) {
+                              navigate(`/cluster-templates/${workflow.spec.workflowTemplateRef.name}`);
+                            } else {
+                              navigate(`/templates/${namespace}/${workflow.spec!.workflowTemplateRef!.name}`);
+                            }
+                          }}
+                          className="text-indigo-400 hover:text-indigo-300 font-bold underline flex items-center gap-1"
+                        >
+                          <span>{workflow.spec.workflowTemplateRef?.name}</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -624,7 +628,7 @@ export function WorkflowDetail({
 
         {/* LOGS TAB */}
         {activeTab === 'LOGS' && (
-          <div className="h-[480px] pb-8">
+          <div className="h-[calc(100vh-320px)] min-h-[550px] lg:min-h-[680px] pb-6">
             <LogStream
               namespace={namespace!}
               workflowName={name!}
