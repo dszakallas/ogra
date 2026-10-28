@@ -13,3 +13,8 @@ inputs:
     inputs:
       nixpkgs:
         follows: nixpkgs
+  kustomize-plugins:
+    url: github:midiparse/kustomize-plugins
+    inputs:
+      nixpkgs:
+        follows: nixpkgs

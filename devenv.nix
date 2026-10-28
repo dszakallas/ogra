@@ -22,7 +22,7 @@
     pkgs.nodejs_24
     pkgs.playwright-driver
     pkgs.kustomize
-    (pkgs.callPackage ./devenv/pkgs/kustomize-plugins.nix { })
+    inputs.kustomize-plugins.packages.${pkgs.stdenv.system}.default
     (pkgs.python3.withPackages (ps: [ ps.pyyaml ]))
   ];
 
