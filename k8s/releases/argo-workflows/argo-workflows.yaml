@@ -11,13 +11,13 @@ spec:
       type: githubRelease
       repo: argoproj/argo-workflows
       # renovate: datasource=github-releases depName=argoproj/argo-workflows
-      version: v4.0.5
+      version: v4.1.6
       asset: install.yaml
 status:
   - destination: vendor/install.yaml
-    hash: sha256:98f742908e1dba9becbd73e608f5c6a7434100eb9abe005f6057894cea0d45dc
+    hash: sha256:d25ba490170e35002b746878233d1310c3fad2f648735e85fa8671366a29dee8
     source:
       type: githubRelease
       repo: argoproj/argo-workflows
-      version: v4.0.5
+      version: v4.1.6
       asset: install.yaml
