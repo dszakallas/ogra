@@ -25,7 +25,7 @@ jobs:
         with:
           name: devenv
       - run: nix profile add nixpkgs#devenv
-      - run: devenv test --dont-override-dotfile
+      - run: devenv test --dont-override-dotfile -P kind
       - name: Build backend package with Nix
         run: nix build .#backend --extra-experimental-features "nix-command flakes"
       - name: Apply autofixes

@@ -37,7 +37,7 @@
         echo "[INFO] Applying Argo Workflows manifests and CRDs to kind cluster using server-side apply..."
         kubectl create namespace argo --dry-run=client -o yaml | kubectl apply -f -
         kubectl apply --server-side --force-conflicts -f "${config.devenv.root}/api/crds"
-        kubectl apply --server-side --force-conflicts -n argo -f "${config.devenv.root}/k8s/releases/argo-workflows/install.yaml"
+        kustomize build --enable-alpha-plugins --enable-exec "${config.devenv.root}/k8s/releases/argo-workflows" | kubectl apply --server-side --force-conflicts -n argo -f -
       '';
       after = [ "kind:cluster" ];
       before = [ "devenv:enterShell" ];

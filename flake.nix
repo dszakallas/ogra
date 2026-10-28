@@ -44,7 +44,7 @@
           src = ./.;
 
           #+update .#backend.goModules
-          vendorHash = "sha256-FOKHK2GS+UeFwvJNGy9w/Q/B86qh0cYMntC3qzfXozs=";
+          vendorHash = "sha256-qRLxyppYsa6MOKSFRYtfpjAPR8+CVOOzFFoDmB8OaqI=";
 
           proxyVendor = true;
 
