@@ -1,0 +1,7 @@
+- destination: vendor/argo-workflows/install.yaml
+  hash: sha256:98f742908e1dba9becbd73e608f5c6a7434100eb9abe005f6057894cea0d45dc
+  source:
+    type: githubRelease
+    repo: argoproj/argo-workflows
+    version: v4.0.5
+    asset: install.yaml

@@ -143,11 +143,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793184448,
-        "narHash": "sha256-0Wo3xeYCOEXmYXnk8tr3lE3VFPcTG1/KUR6Jh0o1G5E=",
+        "lastModified": 1793519752,
+        "narHash": "sha256-JzDY9atKwchy7KeYQVDNBIHVGUn8MS80fykjXY5cNeo=",
         "owner": "midiparse",
         "repo": "kustomize-plugins",
-        "rev": "11a17916c61a65292e51b536b10b047cafc41d2a",
+        "rev": "2df4350e129c36e332fe1683a0db08448f4a38d6",
         "type": "github"
       },
       "original": {
